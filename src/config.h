@@ -2,6 +2,7 @@
 #define MANAGEMENT_TYPES_H_
 
 #include <sys/socket.h>
+#include "thirdparty/srt/srt.h"
 
 #define DEFAULT_SRT_PORT 9071
 #define DEFAULT_WEB_PORT 8071
@@ -20,6 +21,10 @@ allowed for an individual stream (0 for no limit) \n\
 -P <NUMBER>  Maximum number of pending connections(0 for no limit) \n\
 -a <COMMAND> Command to execute to authenticate connections\n"
 
+
+
+// Overall configuration for ShaRT. Gets set once
+// at startup based on command line arguments (see HELP_MESSAGE)
 struct shart_config {
     unsigned short srt_port;
     unsigned short web_port;
@@ -33,12 +38,7 @@ struct shart_config {
     char * auth_command;
 };
 
+// Assigns values to shart_config given command line args
 struct shart_config * parse_args_to_config(int argc, char * argv[]);
-
-struct published_stream_data {
-    char * stream_id;
-    struct sockaddr * publisher;
-    unsigned int num_subscribers;
-};
 
 #endif
