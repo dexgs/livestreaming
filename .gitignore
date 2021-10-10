@@ -1,2 +1,5 @@
 *.o
 bin/
+build/
+src/thirdparty/srt/
+src/thirdparty/libdatachannel/
