@@ -2,12 +2,16 @@
 #include "thirdparty/srt/srt.h"
 #include "config.h"
 #include "authenticator.h"
+#include "published_stream.h"
+#include "srt_listener.h"
 
 int main(int argc, char * argv[]) {
     struct shart_config * c = parse_args_to_config(argc, argv);
     struct authenticator * auth = create_authenticator(
             c->auth_command, c->max_pending_connections);
+    struct published_stream_map * map = create_published_stream_map(
+            c->max_publishers, c->max_subscribers_per_publisher);
 
-    SRTSOCKET sock = srt_create_socket();
-    return srt_close(sock);
+    start_srt_listener(c->srt_port, auth, map);
+    // start_web_listener(c->web_port, auth, map);
 }
