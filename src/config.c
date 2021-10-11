@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include "management_types.h"
+#include "config.h"
 
 
 struct shart_config * parse_args_to_config(int argc, char * argv[]) {
