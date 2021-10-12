@@ -6,16 +6,15 @@
 #define PUBLISH_STRING "PUBLISH"
 #define SUBSCRIBE_STRING "SUBSCRIBE"
 
-enum connection_type {publish, subscribe};
-
 struct authenticator;
 
 struct authenticator * create_authenticator(
         const char * auth_command, unsigned int max_pending_connections);
 
-bool authenticate(
-        struct authenticator * auth, enum connection_type type,
-        const char * stream_name, const char * password, const char * addr);
+// Returns the processed stream name on success, returns NULL on failure
+char * authenticate(
+        struct authenticator * auth, bool is_publisher,
+        const char * addr, const char * stream_name);
 
 bool max_pending_connections_exceeded(struct authenticator * auth);
 
