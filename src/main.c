@@ -12,7 +12,10 @@ int main(int argc, char * argv[]) {
     struct published_stream_map * map = create_published_stream_map(
             c->max_publishers, c->max_subscribers_per_publisher);
 
-    start_srt_listeners(c->srt_publish_port, c->srt_subscribe_port, auth, map);
+    start_srt_listeners(
+            c->srt_publish_port, c->srt_subscribe_port,
+            c->srt_publish_passphrase, c->srt_subscribe_passphrase,
+            auth, map);
     // start_web_listener(c->web_port, auth, map);
 
     // Block until interrupted

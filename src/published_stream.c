@@ -81,13 +81,11 @@ void add_srt_subscriber(struct published_stream_data * data, SRTSOCKET sock) {
 }
 
 
+// This function assumes that the current thread has locked srt_subscribers_lock
 void remove_srt_subscriber_node(
         struct published_stream_data * data,
         struct srt_subscriber_node * subscriber)
 {
-    // Assert that the current thread has locked srt_subscribers_lock
-    assert(pthread_mutex_trylock(&data->srt_subscribers_lock) == EDEADLK);
-
     // Update pointers
     if (subscriber == data->srt_subscribers) data->srt_subscribers = subscriber->next;
     if (subscriber->prev != NULL) subscriber->prev->next = subscriber->next;
@@ -178,11 +176,10 @@ struct published_stream_map * create_published_stream_map(
 }
 
 
+// This function assumes map->map_lock is locked by the current thread
 struct published_stream_node * get_node_with_name(
         struct published_stream_map * map, const char * name)
 {
-    assert(pthread_mutex_trylock(&map->map_lock) == EDEADLK);
-
     int index = hash(name) % MAP_SIZE;
 
     struct published_stream_node * node = map->buckets[index];
@@ -227,13 +224,14 @@ bool stream_name_in_map(struct published_stream_map * map, const char * name) {
 }
 
 
-char ** stream_names(struct published_stream_map * map) {
+char ** stream_names(struct published_stream_map * map, int * num_streams) {
     int mutex_lock_err;
 
     mutex_lock_err = pthread_mutex_lock(&map->map_lock);
     assert(mutex_lock_err == 0);
 
     char ** stream_names = malloc(sizeof(char *) * map->num_publishers);
+    *num_streams = map->num_publishers;
 
     unsigned int stream_names_index = 0;
 

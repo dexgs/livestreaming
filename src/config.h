@@ -12,16 +12,18 @@
 #define DEFAULT_MAX_PUBLISHERS 0
 #define DEFAULT_MAX_SUBSCRIBERS_PER_PUBLISHER 0
 #define DEFAULT_MAX_PENDING_CONNECTIONS 0
-#define DEFAULT_AUTH_COMMAND "exit"
+#define DEFAULT_AUTH_COMMAND "exit 0"
 
 #define HELP_MESSAGE "USAGE:\n\
 --srt-publish-port <PORT>            set port to use listen for SRT publishers \n\
 \n\
 --srt-publish-passphrase <STRING>    set SRT encryption passphrase for publishers \n\
+                                     (must be between 10 and 79 characters long) \n\
 \n\
 --srt-subscribe-port <PORT>          set port to use for SRT subscribers \n\
 \n\
 --srt-subscribe-passphrase <STRING>  set SRT encryption passphrase for subscribers \n\
+                                     (must be between 10 and 79 characters long) \n\
 \n\
 --webrtc-subscribe-port <PORT>       set port to use for WebRTC \n\
 \n\

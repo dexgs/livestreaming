@@ -6,6 +6,9 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
 #include <unistd.h>
 #include "authenticator.h"
 
@@ -40,6 +43,7 @@ struct authenticator * create_authenticator(
     return auth;
 }
 
+
 #define PUBLISH_STRING "PUBLISH"
 #define SUBSCRIBE_STRING "SUBSCRIBE"
 
@@ -56,8 +60,9 @@ char * authenticate(
     mutex_lock_err = pthread_mutex_unlock(&auth->num_connections_lock);
     assert(mutex_lock_err == 0);
 
-    mutex_lock_err = pthread_mutex_lock(&auth->process_lock);
-    assert(mutex_lock_err == 0);
+    // TODO possibly remove process_lock entirely
+    //mutex_lock_err = pthread_mutex_lock(&auth->process_lock);
+    //assert(mutex_lock_err == 0);
 
     char * type_str;
     if (is_publisher) {
@@ -73,6 +78,9 @@ char * authenticate(
         + strlen(stream_name)
         + 4;
     char * command = malloc(sizeof(char) * command_len);
+    // Set first char to the null character to avoid garbage data causing
+    // problems
+    command[0] = '\0';
     // This is sub-optimal, but I don't care right now.
     strcat(command, auth->auth_command);
     strcat(command, " ");
@@ -82,8 +90,7 @@ char * authenticate(
     strcat(command, " ");
     strcat(command, stream_name);
 
-    int exit_status = 1;
-
+    // call `auth_command` with arguments `type_str addr stream_name`
     FILE * p;
     p = popen(command, "r");
 
@@ -109,7 +116,7 @@ char * authenticate(
         output_stream_name = realloc(output_stream_name, chars_so_far + 1);
         output_stream_name[chars_so_far] = '\0';
 
-        exit_status = pclose(p);
+        int exit_status = pclose(p);
 
         if (exit_status != 0) {
             // If command did not exit successfully
@@ -124,8 +131,8 @@ char * authenticate(
 
     free(command);
 
-    mutex_lock_err = pthread_mutex_unlock(&auth->process_lock);
-    assert(mutex_lock_err == 0);
+    //mutex_lock_err = pthread_mutex_unlock(&auth->process_lock);
+    //assert(mutex_lock_err == 0);
 
     mutex_lock_err = pthread_mutex_lock(&auth->num_connections_lock);
     assert(mutex_lock_err == 0);
@@ -135,6 +142,7 @@ char * authenticate(
 
     return output_stream_name;
 }
+
 
 bool max_pending_connections_exceeded(struct authenticator * auth) {
     if (auth->max_pending_connections == 0) return false;
@@ -154,4 +162,19 @@ bool max_pending_connections_exceeded(struct authenticator * auth) {
     assert(mutex_lock_err == 0);
 
     return exceeded;
+}
+
+
+
+char * sockaddr_to_string(struct sockaddr_storage * addr, int addr_len) {
+    char * addr_str = malloc(sizeof(char) * (NI_MAXHOST + 1 + NI_MAXSERV));
+    char * port_str = malloc(sizeof(char) * NI_MAXSERV);
+    getnameinfo(
+            (struct sockaddr *)addr, addr_len, addr_str,
+            NI_MAXHOST, port_str, NI_MAXSERV, NI_NUMERICHOST);
+    strcat(addr_str, ":");
+    strcat(addr_str, port_str);
+    free(port_str);
+    addr_str = realloc(addr_str, strlen(addr_str));
+    return addr_str;
 }

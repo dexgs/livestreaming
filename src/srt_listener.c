@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include "srt_listener.h"
+#include "srt_publisher.h"
 #include "authenticator.h"
 #include "published_stream.h"
 #include "thirdparty/srt/srt.h"
@@ -30,26 +31,29 @@ struct sockaddr_in get_sockaddr_with_port(unsigned short port) {
 
 void start_srt_listener(
         unsigned short port, struct authenticator * auth,
-        struct published_stream_map * map, bool is_publisher);
+        struct published_stream_map * map, bool is_publisher,
+        const char * passphrase);
 
 void * run_srt_listener(void * d);
 
 void start_srt_listeners(
         unsigned short publish_port, unsigned short subscribe_port,
+        char * publish_passphrase, char * subscribe_passphrase,
         struct authenticator * auth, struct published_stream_map * map)
 {
     srt_startup();
 
     printf("Listening for SRT publishers on port: %d\n", publish_port);
-    start_srt_listener(publish_port, auth, map, true);
+    start_srt_listener(publish_port, auth, map, true, publish_passphrase);
 
     printf("Listening for SRT subscribers on port: %d\n", subscribe_port);
-    start_srt_listener(subscribe_port, auth, map, false);
+    start_srt_listener(subscribe_port, auth, map, false, subscribe_passphrase);
 }
 
 void start_srt_listener(
         unsigned short port, struct authenticator * auth,
-        struct published_stream_map * map, bool is_publisher)
+        struct published_stream_map * map, bool is_publisher,
+        const char * passphrase)
 {
     struct sockaddr_in addr = get_sockaddr_with_port(port);
 
@@ -62,6 +66,12 @@ void start_srt_listener(
     d->auth = auth;
     d->map = map;
     d->is_publisher = is_publisher;
+
+    // Set passphrase for encryption
+    int set_flag_err; 
+    set_flag_err =
+        srt_setsockflag(sock, SRTO_PASSPHRASE, passphrase, strlen(passphrase));
+    assert(set_flag_err != SRT_ERROR);
 
     pthread_t thread_handle;
     pthread_create(&thread_handle, NULL, run_srt_listener, d);
@@ -77,6 +87,7 @@ void * run_srt_listener(void * _d) {
     SRTSOCKET sock = d->sock;
     struct authenticator * auth = d->auth;
     struct published_stream_map * map = d->map;
+    bool is_publisher = d->is_publisher;
     free(d);
 
     int listen_err = srt_listen(sock, SRT_LISTEN_BACKLOG);
@@ -94,20 +105,23 @@ void * run_srt_listener(void * _d) {
             close_err = srt_close(client_sock);
             assert(close_err != SRT_ERROR);
         } else {
-            /*
-            printf("huzzah!\n");
-
-            int recv_err = 0;
-            char buf[8192];
-            while (recv_err != SRT_ERROR) {
-                recv_err = srt_recv(client_sock, buf, sizeof(buf));
-                printf("recvd\n");
+            char * addr_str = sockaddr_to_string(&client_addr, client_addr_len);
+            if (is_publisher) {
+                srt_publisher(client_sock, addr_str, auth, map);
+            } else {
+                // Don't allow any input traffic from subscribers
+                int set_flag_err;
+                int64_t z = 0;
+                set_flag_err =
+                    srt_setsockflag(client_sock, SRTO_MAXBW, &z, sizeof(z));
+                assert(set_flag_err != SRT_ERROR);
+                set_flag_err =
+                    srt_setsockflag(client_sock, SRTO_INPUTBW, &z, sizeof(z));
+                assert(set_flag_err != SRT_ERROR);
+                // srt_subscriber(client_sock, addr_str, auth, map);
             }
-            fprintf(stderr, "err: %s\n", srt_getlasterror_str());
-            srt_close(client_sock);
-
-            printf("DONE!\n");
-            */
         }
     }
+
+    return NULL;
 }
