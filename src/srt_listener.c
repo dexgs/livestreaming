@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include "srt_listener.h"
 #include "srt_publisher.h"
+#include "srt_subscriber.h"
+#include "srt_common.h"
 #include "authenticator.h"
 #include "published_stream.h"
 #include "thirdparty/srt/srt.h"
@@ -107,7 +109,8 @@ void * run_srt_listener(void * _d) {
         } else {
             char * addr_str = sockaddr_to_string(&client_addr, client_addr_len);
             if (is_publisher) {
-                srt_publisher(client_sock, addr_str, auth, map);
+                start_srt_thread(
+                        client_sock, addr_str, auth, map, run_srt_publisher);
             } else {
                 // Don't allow any input traffic from subscribers
                 int set_flag_err;
@@ -118,7 +121,9 @@ void * run_srt_listener(void * _d) {
                 set_flag_err =
                     srt_setsockflag(client_sock, SRTO_INPUTBW, &z, sizeof(z));
                 assert(set_flag_err != SRT_ERROR);
-                // srt_subscriber(client_sock, addr_str, auth, map);
+
+                start_srt_thread(
+                        client_sock, addr_str, auth, map, run_srt_subscriber);
             }
         }
     }

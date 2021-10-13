@@ -219,7 +219,7 @@ bool stream_name_in_map(struct published_stream_map * map, const char * name) {
 
     mutex_lock_err = pthread_mutex_unlock(&map->map_lock);
     assert(mutex_lock_err == 0);
-    
+
     return stream_name_in_map;
 }
 

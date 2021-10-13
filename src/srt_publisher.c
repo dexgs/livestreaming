@@ -5,49 +5,22 @@
 #include "thirdparty/srt/srt.h"
 #include "published_stream.h"
 #include "authenticator.h"
+#include "srt_common.h"
 
-struct thread_data {
-    SRTSOCKET sock;
-    char * addr;
-    struct authenticator * auth;
-    struct published_stream_map * map;
-};
-
-void * run_srt_publisher(void * _d);
-
-void srt_publisher(
-        SRTSOCKET sock, char * addr, struct authenticator * auth,
-        struct published_stream_map * map)
-{
-    struct thread_data * d = malloc(sizeof(struct thread_data));
-    d->sock = sock;
-    d->addr = addr;
-    d->auth = auth;
-    d->map = map;
-
-    pthread_t thread_handle;
-    pthread_create(&thread_handle, NULL, run_srt_publisher, d);
-}
 
 #ifndef SRT_BUFFER_SIZE
 #define SRT_BUFFER_SIZE 4096
 #endif
 
-#define SRT_STREAMID_MAX_LEN 512
-
 void * run_srt_publisher(void * _d) {
-    struct thread_data * d = (struct thread_data *) _d;
+    struct srt_thread_data * d = (struct srt_thread_data *) _d;
     SRTSOCKET sock = d->sock;
     char * addr = d->addr;
     struct authenticator * auth = d->auth;
     struct published_stream_map * map = d->map;
     free(d);
 
-    // SRT stream id is at most 512 chars long
-    char * name = malloc(sizeof(char) * SRT_STREAMID_MAX_LEN);
-    int name_len = SRT_STREAMID_MAX_LEN;
-    srt_getsockflag(sock, SRTO_STREAMID, name, &name_len);
-    name = realloc(name, name_len);
+    char * name = get_socket_stream_id(sock);
 
     char * processed_name = authenticate(auth, true, addr, name);
     free(name);

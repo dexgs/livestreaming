@@ -16,6 +16,7 @@ int main(int argc, char * argv[]) {
             c->srt_publish_port, c->srt_subscribe_port,
             c->srt_publish_passphrase, c->srt_subscribe_passphrase,
             auth, map);
+
     // start_web_listener(c->web_port, auth, map);
 
     // Block until interrupted

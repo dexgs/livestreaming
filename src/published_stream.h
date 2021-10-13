@@ -25,7 +25,8 @@ unsigned int get_num_subscribers(struct published_stream_data * data);
 // called from outside the thread for a stream
 void add_srt_subscriber(struct published_stream_data * data, SRTSOCKET sock);
 // called from inside the thread for a stream if sending data failed
-// its implementation assumes srt_subscribers_lock has been acquired
+// its implementation assumes srt_subscribers_lock has been acquired and will
+// close the socket of the node that was removed.
 void remove_srt_subscriber_node(
         struct published_stream_data * data,
         struct srt_subscriber_node * subscriber);
