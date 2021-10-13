@@ -63,11 +63,16 @@ bool max_publishers_exceeded(struct published_stream_map * map);
 
 bool stream_name_in_map(struct published_stream_map * map, const char * name);
 
-char ** stream_names(struct published_stream_map * map);
+// All names are copied into the returned string array. There will be no memory
+// shared between the returned strings and the contents of the map. Because of
+// this, num_streams *must* be used as the length for iterating over the names
+// because the size of the array may go out of sync with the contents of the map.
+char ** stream_names(struct published_stream_map * map, int * num_streams);
 
 void add_stream_to_map(
         struct published_stream_map * map, SRTSOCKET sock, const char * name);
 
+// This function does not free the published_stream_data with the given name
 void remove_stream_from_map(
         struct published_stream_map * map, const char * name);
 
