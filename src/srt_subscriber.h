@@ -5,6 +5,6 @@
 #include "published_stream.h"
 #include "authenticator.h"
 
-void * run_srt_subscriber(void * _d);
+void * srt_subscriber(void * _d);
 
 #endif

@@ -6,7 +6,7 @@
 #include "authenticator.h"
 
 
-void * run_srt_subscriber(void * _d) {
+void * srt_subscriber(void * _d) {
     struct srt_thread_data * d = (struct srt_thread_data *) _d;
     SRTSOCKET sock = d->sock;
     char * addr = d->addr;

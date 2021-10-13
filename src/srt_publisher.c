@@ -12,7 +12,7 @@
 #define SRT_BUFFER_SIZE 4096
 #endif
 
-void * run_srt_publisher(void * _d) {
+void * srt_publisher(void * _d) {
     struct srt_thread_data * d = (struct srt_thread_data *) _d;
     SRTSOCKET sock = d->sock;
     char * addr = d->addr;
@@ -53,12 +53,13 @@ void * run_srt_publisher(void * _d) {
     int mutex_lock_err;
 
     while (recv_err != SRT_ERROR) {
+        int send_err;
+
         // Send data to SRT subscribers
         mutex_lock_err = pthread_mutex_lock(&data->srt_subscribers_lock);
         assert(mutex_lock_err == 0);
 
         struct srt_subscriber_node * srt_node = data->srt_subscribers;
-        int send_err;
         while (srt_node != NULL) {
             send_err = srt_send(srt_node->sock, buf, SRT_BUFFER_SIZE);
             struct srt_subscriber_node * next_node = srt_node->next;
@@ -75,6 +76,24 @@ void * run_srt_publisher(void * _d) {
         assert(mutex_lock_err == 0);
 
         // Send data to WebRTC subscribers
+        mutex_lock_err = pthread_mutex_lock(&data->webrtc_subscribers_lock);
+        assert(mutex_lock_err == 0);
+
+        struct webrtc_subscriber_node * webrtc_node = data->webrtc_subscribers;
+        while (webrtc_node != NULL) {
+            send_err = 0; // TODO: WebRTC sending goes here
+            struct webrtc_subscriber_node * next_node = webrtc_node->next;
+
+            // If sending failed, remove the subscriber
+            if (send_err != 0) {
+                // remove_webrtc_subscriber_node(data, webrtc_node);
+            }
+
+            webrtc_node = next_node;
+        }
+
+        mutex_lock_err = pthread_mutex_unlock(&data->srt_subscribers_lock);
+        assert(mutex_lock_err == 0);
 
         // Fill buffer with new data
         recv_err = srt_recv(sock, buf, SRT_BUFFER_SIZE);

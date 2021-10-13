@@ -110,7 +110,7 @@ void * run_srt_listener(void * _d) {
             char * addr_str = sockaddr_to_string(&client_addr, client_addr_len);
             if (is_publisher) {
                 start_srt_thread(
-                        client_sock, addr_str, auth, map, run_srt_publisher);
+                        client_sock, addr_str, auth, map, srt_publisher);
             } else {
                 // Don't allow any input traffic from subscribers
                 int set_flag_err;
@@ -123,7 +123,7 @@ void * run_srt_listener(void * _d) {
                 assert(set_flag_err != SRT_ERROR);
 
                 start_srt_thread(
-                        client_sock, addr_str, auth, map, run_srt_subscriber);
+                        client_sock, addr_str, auth, map, srt_subscriber);
             }
         }
     }
