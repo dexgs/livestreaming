@@ -1,4 +1,5 @@
 #include <pthread.h>
+#include <stdlib.h>
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
@@ -32,7 +33,8 @@ struct published_stream_data * create_published_stream_data(
     data->sock = sock;
     data->name = name;
     data->num_subscribers = 0;
-
+    data->srt_subscribers = NULL;
+    data->webrtc_subscribers = NULL;
     return data;
 }
 
@@ -257,7 +259,7 @@ char ** stream_names(struct published_stream_map * map, int * num_streams) {
 }
 
 
-void add_stream_to_map(
+struct published_stream_data * add_stream_to_map(
         struct published_stream_map * map, SRTSOCKET sock, const char * name)
 {
     int mutex_lock_err;
@@ -288,6 +290,8 @@ void add_stream_to_map(
 
     mutex_lock_err = pthread_mutex_unlock(&map->map_lock);
     assert(mutex_lock_err == 0);
+
+    return data;
 }
 
 

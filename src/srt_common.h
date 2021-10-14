@@ -5,6 +5,10 @@
 #include "published_stream.h"
 #include "authenticator.h"
 
+// MPEGTS packet size is 188. 188 x 7 = 1316, i.e. the most complete MPEGTS
+// packets that can be sent in a single UDP packet (1500 bytes)
+#define SRT_BUFFER_SIZE 1316
+
 struct srt_thread_data {
     SRTSOCKET sock;
     char * addr;
@@ -17,5 +21,7 @@ void start_srt_thread(
         struct published_stream_map * map, void * (*thread_function)(void *));
 
 char * get_socket_stream_id(SRTSOCKET sock);
+
+int srt_send_chunked(SRTSOCKET sock, const char * buf, int len);
 
 #endif

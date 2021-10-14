@@ -1,16 +1,13 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <assert.h>
+#include <unistd.h>
 #include "srt_publisher.h"
 #include "thirdparty/srt/srt.h"
 #include "published_stream.h"
 #include "authenticator.h"
 #include "srt_common.h"
 
-
-#ifndef SRT_BUFFER_SIZE
-#define SRT_BUFFER_SIZE 4096
-#endif
 
 void * srt_publisher(void * _d) {
     struct srt_thread_data * d = (struct srt_thread_data *) _d;
@@ -35,22 +32,20 @@ void * srt_publisher(void * _d) {
             // If another stream is already using the chosen name
             || stream_name_in_map(map, name)) 
     {
-        srt_close(sock);
-        return NULL;
+        goto close;
     }
 
     printf("`%s` started publishing `%s`\n", addr, name);
 
     // Add the stream and acquire the created stream data
-    add_stream_to_map(map, sock, name);
-    struct published_stream_data * data =
-        get_stream_from_map(map, name);
-    assert(data != NULL);
+    struct published_stream_data * data = add_stream_to_map(map, sock, name);
+    if (data == NULL) {
+        goto close;
+    }
 
     char buf[SRT_BUFFER_SIZE];
-    int recv_err = 0;
-
     int mutex_lock_err;
+    int recv_err = 0;
 
     while (recv_err != SRT_ERROR) {
         int send_err;
@@ -65,7 +60,8 @@ void * srt_publisher(void * _d) {
             struct srt_subscriber_node * next_node = srt_node->next;
 
             // If sending failed, remove the subscriber
-            if (send_err != 0) {
+            if (send_err == SRT_ERROR) {
+                printf("ouah!\n");
                 remove_srt_subscriber_node(data, srt_node);
             }
 
@@ -92,7 +88,7 @@ void * srt_publisher(void * _d) {
             webrtc_node = next_node;
         }
 
-        mutex_lock_err = pthread_mutex_unlock(&data->srt_subscribers_lock);
+        mutex_lock_err = pthread_mutex_unlock(&data->webrtc_subscribers_lock);
         assert(mutex_lock_err == 0);
 
         // Fill buffer with new data
@@ -121,8 +117,16 @@ void * srt_publisher(void * _d) {
     mutex_lock_err = pthread_mutex_unlock(&data->srt_subscribers_lock);
     assert(mutex_lock_err == 0);
     // Clean up WebRTC subscribers
+
     // Free the published_stream_data
     free(data);
 
+    return NULL;
+
+close:
+    if (name != NULL) free(name);
+    if (addr != NULL) free(addr);
+    if (data != NULL) free(data);
+    srt_close(sock);
     return NULL;
 }
