@@ -61,7 +61,6 @@ void * srt_publisher(void * _d) {
 
             // If sending failed, remove the subscriber
             if (send_err == SRT_ERROR) {
-                printf("ouah!\n");
                 remove_srt_subscriber_node(data, srt_node);
             }
 

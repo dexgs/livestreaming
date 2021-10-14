@@ -73,11 +73,20 @@ void start_srt_listener(
     // Set latency to zero
     int z = 0;
     set_flag_err = srt_setsockflag(sock, SRTO_LATENCY, &z, sizeof(z));
-    assert(set_flag_err == 0);
+    assert(set_flag_err != SRT_ERROR);
 
     // Set passphrase for encryption
     set_flag_err =
         srt_setsockflag(sock, SRTO_PASSPHRASE, passphrase, strlen(passphrase));
+    assert(set_flag_err != SRT_ERROR);
+
+    bool no = false;
+    // Disable timestamps
+    set_flag_err = srt_setsockflag(sock, SRTO_TSBPDMODE, &no, sizeof(no));
+    assert(set_flag_err != SRT_ERROR);
+
+    // Disable repeated loss detection reports
+    set_flag_err = srt_setsockflag(sock, SRTO_NAKREPORT, &no, sizeof(no));
     assert(set_flag_err != SRT_ERROR);
 
     pthread_t thread_handle;
