@@ -20,13 +20,12 @@ void * srt_subscriber(void * _d) {
     free(name);
     name = processed_name;
 
-    struct published_stream_data * data = get_stream_from_map(map, name);
     // Close connection prematurely if...
     if (
             // If authentication failed
             name == NULL
             // If there is no active stream with the requested name
-            || data == NULL
+            || !stream_name_in_map(map, name)
             // If the maximum number of subscribers to the stream
             // would be exceeded
             || max_subscribers_exceeded(map, name))
@@ -35,7 +34,13 @@ void * srt_subscriber(void * _d) {
         return NULL;
     }
 
-    add_srt_subscriber(data, sock);
+
+    struct published_stream_data * data = get_stream_from_map(map, name);
+    if (data != NULL) {
+        add_srt_subscriber(data, sock);
+    } else {
+        srt_close(sock);
+    }
 
     return NULL;
 }

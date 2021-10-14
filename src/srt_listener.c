@@ -69,8 +69,13 @@ void start_srt_listener(
     d->map = map;
     d->is_publisher = is_publisher;
 
+    int set_flag_err;
+    // Set latency to zero
+    int z = 0;
+    set_flag_err = srt_setsockflag(sock, SRTO_LATENCY, &z, sizeof(z));
+    assert(set_flag_err == 0);
+
     // Set passphrase for encryption
-    int set_flag_err; 
     set_flag_err =
         srt_setsockflag(sock, SRTO_PASSPHRASE, passphrase, strlen(passphrase));
     assert(set_flag_err != SRT_ERROR);
@@ -112,16 +117,6 @@ void * run_srt_listener(void * _d) {
                 start_srt_thread(
                         client_sock, addr_str, auth, map, srt_publisher);
             } else {
-                // Don't allow any input traffic from subscribers
-                int set_flag_err;
-                int64_t z = 0;
-                set_flag_err =
-                    srt_setsockflag(client_sock, SRTO_MAXBW, &z, sizeof(z));
-                assert(set_flag_err != SRT_ERROR);
-                set_flag_err =
-                    srt_setsockflag(client_sock, SRTO_INPUTBW, &z, sizeof(z));
-                assert(set_flag_err != SRT_ERROR);
-
                 start_srt_thread(
                         client_sock, addr_str, auth, map, srt_subscriber);
             }

@@ -14,7 +14,6 @@
 
 struct authenticator {
     pthread_mutex_t num_connections_lock;
-    pthread_mutex_t process_lock;
     unsigned int max_pending_connections;
     unsigned int num_pending_connections;
     const char * auth_command;
@@ -30,12 +29,7 @@ struct authenticator * create_authenticator(
     mutex_init_err = pthread_mutex_init(&num_connections_lock, NULL);
     assert(mutex_init_err == 0);
 
-    pthread_mutex_t process_lock;
-    mutex_init_err = pthread_mutex_init(&process_lock, NULL);
-    assert(mutex_init_err == 0);
-
     auth->num_connections_lock = num_connections_lock;
-    auth->process_lock = process_lock;
     auth->max_pending_connections = max_pending_connections;
     auth->num_pending_connections = 0;
     auth->auth_command = auth_command;
@@ -59,10 +53,6 @@ char * authenticate(
     auth->num_pending_connections++;
     mutex_lock_err = pthread_mutex_unlock(&auth->num_connections_lock);
     assert(mutex_lock_err == 0);
-
-    // TODO possibly remove process_lock entirely
-    //mutex_lock_err = pthread_mutex_lock(&auth->process_lock);
-    //assert(mutex_lock_err == 0);
 
     char * type_str;
     if (is_publisher) {
@@ -124,15 +114,12 @@ char * authenticate(
             output_stream_name = NULL;
         } else if (chars_so_far == 0) {
             // If command had no output, default to stream_name
-            output_stream_name = realloc(output_stream_name, inc);
+            output_stream_name = realloc(output_stream_name, inc + 1);
             output_stream_name = strcpy(output_stream_name, stream_name);
         }
     }
 
     free(command);
-
-    //mutex_lock_err = pthread_mutex_unlock(&auth->process_lock);
-    //assert(mutex_lock_err == 0);
 
     mutex_lock_err = pthread_mutex_lock(&auth->num_connections_lock);
     assert(mutex_lock_err == 0);
@@ -175,6 +162,6 @@ char * sockaddr_to_string(struct sockaddr_storage * addr, int addr_len) {
     strcat(addr_str, ":");
     strcat(addr_str, port_str);
     free(port_str);
-    addr_str = realloc(addr_str, strlen(addr_str));
+    addr_str = realloc(addr_str, strlen(addr_str) + 1);
     return addr_str;
 }
