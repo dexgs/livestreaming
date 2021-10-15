@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "published_stream.h"
-#include "thirdparty/srt/srt.h"
+#include "srt/srt.h"
 
 
 struct published_stream_data * create_published_stream_data(

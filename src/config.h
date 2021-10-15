@@ -1,8 +1,5 @@
-#ifndef MANAGEMENT_TYPES_H_
-#define MANAGEMENT_TYPES_H_
-
-#include <sys/socket.h>
-#include "thirdparty/srt/srt.h"
+#ifndef SHART_CONFIG_H_
+#define SHART_CONFIG_H_
 
 #define DEFAULT_SRT_PUBLISH_PORT 9991
 #define DEFAULT_SRT_PUBLISH_PASSPHRASE ""
@@ -25,7 +22,7 @@
 --srt-subscribe-passphrase <STRING>  set SRT encryption passphrase for subscribers \n\
                                      (must be between 10 and 79 characters long) \n\
 \n\
---webrtc-subscribe-port <PORT>       set port to use for WebRTC \n\
+--web-port <PORT>                    set port to use for HTTP \n\
 \n\
 --max-streams <NUMBER>               Maximum number of streams allowed to be \n\
                                         published at once (0 for no limit) \n\
