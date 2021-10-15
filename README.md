@@ -7,4 +7,4 @@ SRT and HTTP. It is the suck-ccessor to [diarrhea](https://git.extremelycorporat
 
 ShaRT depends on [SRT](https://github.com/Haivision/srt) version `1.4.4` against
 which it links statically. It also depends on `libcrypto`, `libcurl`, and 
-`libpthread` to be available on the host system.
+`libpthread` being available on the host system.
