@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 #include <pthread.h>
-#include "thirdparty/srt/srt.h"
+#include "srt/srt.h"
 
 struct published_stream_data {
     SRTSOCKET sock;

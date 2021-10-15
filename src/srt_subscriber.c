@@ -1,7 +1,7 @@
 #include <pthread.h>
 #include "srt_subscriber.h"
 #include "srt_common.h"
-#include "thirdparty/srt/srt.h"
+#include "srt/srt.h"
 #include "published_stream.h"
 #include "authenticator.h"
 

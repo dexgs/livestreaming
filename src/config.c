@@ -36,8 +36,8 @@ struct shart_config * parse_args_to_config(int argc, char * argv[]) {
         } else if (strcmp(flag, "--srt-subscribe-passphrase") == 0) {
             // SRT subscribe passphrase
             config->srt_subscribe_passphrase = param;
-        } else if (strcmp(flag, "--webrtc-subscribe-port") == 0) {
-            // WebRTC Port
+        } else if (strcmp(flag, "--web-port") == 0) {
+            // Web Port
             config->web_port = atoi(param);
             assert(config->web_port != 0);
         } else if (strcmp(flag, "--max-streams") == 0) {
