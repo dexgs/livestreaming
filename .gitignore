@@ -2,3 +2,4 @@
 bin/
 _build/
 src/srt/
+src/picohttpparser/

@@ -20,6 +20,6 @@ char * authenticate(
 
 bool max_pending_connections_exceeded(struct authenticator * auth);
 
-char * sockaddr_to_string(struct sockaddr_storage * addr, int addr_len);
+char * sockaddr_to_string(struct sockaddr * addr, int addr_len);
 
 #endif

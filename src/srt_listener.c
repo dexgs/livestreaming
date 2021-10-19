@@ -115,13 +115,16 @@ void * run_srt_listener(void * _d) {
 
         SRTSOCKET client_sock =
             srt_accept(sock, (struct sockaddr *) &client_addr, &client_addr_len);
+
+        if (client_sock < 0) continue;
         
         if (max_pending_connections_exceeded(auth)) {
             int close_err;
             close_err = srt_close(client_sock);
             assert(close_err != SRT_ERROR);
         } else {
-            char * addr_str = sockaddr_to_string(&client_addr, client_addr_len);
+            char * addr_str = sockaddr_to_string(
+                    (struct sockaddr *) &client_addr, client_addr_len);
             if (is_publisher) {
                 start_srt_thread(
                         client_sock, addr_str, auth, map, srt_publisher);

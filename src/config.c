@@ -52,6 +52,9 @@ struct shart_config * parse_args_to_config(int argc, char * argv[]) {
         } else if (strcmp(flag, "--auth-command") == 0) {
             // Auth command
             config->auth_command = param;
+        } else if (strcmp(flag, "--read-web-ip-from-headers") == 0) {
+            // Read web IP address from headers
+            config->read_web_ip_from_headers = param[0] == 'y';
         } else {
             goto error;
         }

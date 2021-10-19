@@ -1,4 +1,5 @@
 #include <pthread.h>
+#include <assert.h>
 #include "srt_subscriber.h"
 #include "srt_common.h"
 #include "srt/srt.h"
@@ -18,6 +19,7 @@ void * srt_subscriber(void * _d) {
 
     char * processed_name = authenticate(auth, false, addr, name);
     free(name);
+    free(addr);
     name = processed_name;
 
     // Close connection prematurely if...
@@ -38,6 +40,8 @@ void * srt_subscriber(void * _d) {
     struct published_stream_data * data = get_stream_from_map(map, name);
     if (data != NULL) {
         add_srt_subscriber(data, sock);
+        int mutex_lock_err = pthread_mutex_unlock(&data->access_lock);
+        assert(mutex_lock_err == 0);
     } else {
         srt_close(sock);
     }

@@ -5,6 +5,7 @@
 #include "srt_publisher.h"
 #include "srt/srt.h"
 #include "published_stream.h"
+#include "web_subscriber.h"
 #include "authenticator.h"
 #include "srt_common.h"
 
@@ -45,9 +46,11 @@ void * srt_publisher(void * _d) {
 
     char buf[SRT_BUFFER_SIZE];
     int mutex_lock_err;
-    int recv_err = 0;
+    int bytes_read = 0;
 
-    while (recv_err != SRT_ERROR) {
+    char hex[12];
+
+    while (bytes_read != SRT_ERROR) {
         int send_err;
 
         // Send data to SRT subscribers
@@ -56,7 +59,7 @@ void * srt_publisher(void * _d) {
 
         struct srt_subscriber_node * srt_node = data->srt_subscribers;
         while (srt_node != NULL) {
-            send_err = srt_send(srt_node->sock, buf, SRT_BUFFER_SIZE);
+            send_err = srt_send(srt_node->sock, buf, bytes_read);
             struct srt_subscriber_node * next_node = srt_node->next;
 
             // If sending failed, remove the subscriber
@@ -70,34 +73,46 @@ void * srt_publisher(void * _d) {
         mutex_lock_err = pthread_mutex_unlock(&data->srt_subscribers_lock);
         assert(mutex_lock_err == 0);
 
-        // Send data to WebRTC subscribers
-        mutex_lock_err = pthread_mutex_lock(&data->webrtc_subscribers_lock);
+        // Send data to Web subscribers
+        mutex_lock_err = pthread_mutex_lock(&data->web_subscribers_lock);
         assert(mutex_lock_err == 0);
 
-        struct webrtc_subscriber_node * webrtc_node = data->webrtc_subscribers;
-        while (webrtc_node != NULL) {
-            send_err = 0; // TODO: WebRTC sending goes here
-            struct webrtc_subscriber_node * next_node = webrtc_node->next;
+        unsigned int hex_len;
+        get_len_hex(bytes_read, hex, sizeof(hex), &hex_len);
+
+        struct web_subscriber_node * web_node = data->web_subscribers;
+        while (web_node != NULL) {
+            send_err = write_to_web_subscriber(
+                    web_node->sock, hex, hex_len, buf, bytes_read);
+
+            struct web_subscriber_node * next_node = web_node->next;
 
             // If sending failed, remove the subscriber
-            if (send_err != 0) {
-                // remove_webrtc_subscriber_node(data, webrtc_node);
+            if (send_err < 0) {
+                remove_web_subscriber_node(data, web_node);
             }
 
-            webrtc_node = next_node;
+            web_node = next_node;
         }
 
-        mutex_lock_err = pthread_mutex_unlock(&data->webrtc_subscribers_lock);
+        mutex_lock_err = pthread_mutex_unlock(&data->web_subscribers_lock);
         assert(mutex_lock_err == 0);
 
         // Fill buffer with new data
-        recv_err = srt_recv(sock, buf, SRT_BUFFER_SIZE);
+        bytes_read = srt_recv(sock, buf, SRT_BUFFER_SIZE);
     }
 
     srt_close(sock);
     printf("`%s` stopped publishing `%s`\n", addr, name);
 
+    mutex_lock_err = pthread_mutex_lock(&data->access_lock);
+    assert(mutex_lock_err == 0);
+
     remove_stream_from_map(map, name);
+
+    mutex_lock_err = pthread_mutex_unlock(&data->access_lock);
+    assert(mutex_lock_err == 0);
+
     free(name);
     free(addr);
 
@@ -115,9 +130,28 @@ void * srt_publisher(void * _d) {
 
     mutex_lock_err = pthread_mutex_unlock(&data->srt_subscribers_lock);
     assert(mutex_lock_err == 0);
-    // Clean up WebRTC subscribers
+
+    // Clean up Web subscribers
+    mutex_lock_err = pthread_mutex_lock(&data->web_subscribers_lock);
+    assert(mutex_lock_err == 0);
+
+    struct web_subscriber_node * web_node = data->web_subscribers;
+    while (web_node != NULL) {
+        write(web_node->sock, "0\r\n\r\n", 5);
+        close(web_node->sock);
+        struct web_subscriber_node * next_node = web_node->next;
+        free(web_node);
+        web_node = next_node;
+    }
+
+    mutex_lock_err = pthread_mutex_unlock(&data->web_subscribers_lock);
+    assert(mutex_lock_err == 0);
 
     // Free the published_stream_data
+    pthread_mutex_destroy(&data->num_subscribers_lock);
+    pthread_mutex_destroy(&data->srt_subscribers_lock);
+    pthread_mutex_destroy(&data->web_subscribers_lock);
+    pthread_mutex_destroy(&data->access_lock);
     free(data);
 
     return NULL;
