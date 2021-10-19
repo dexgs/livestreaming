@@ -17,6 +17,7 @@ struct shart_config * parse_args_to_config(int argc, char * argv[]) {
     config->max_subscribers_per_publisher = DEFAULT_MAX_SUBSCRIBERS_PER_PUBLISHER;
     config->max_pending_connections = DEFAULT_MAX_PENDING_CONNECTIONS;
     config->auth_command = DEFAULT_AUTH_COMMAND;
+    config->read_web_ip_from_headers = DEFAULT_READ_WEB_IP_FROM_HEADERS;
 
     for (int i = 1; i < argc; i += 2) {
         char * flag = argv[i];

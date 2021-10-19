@@ -48,7 +48,7 @@ char * strip_prefix(const char * prefix, const char * str, size_t str_len) {
         stripped_len = str_len - prefix_len;
     }
     // Copy into heap allocated string
-    stripped = malloc(sizeof(char) * (stripped_len + 1));
+    stripped = malloc(stripped_len + 1);
     stripped = strncpy(stripped, str + prefix_len, stripped_len);
     stripped[stripped_len] = '\0';
     return stripped;
@@ -96,7 +96,7 @@ void * run_web_subscriber(void * _d) {
                                 headers[i].name_len) == 0) 
                     {
                         char * header_addr = 
-                            malloc(sizeof(char) * (headers[i].value_len + 1));
+                            malloc(headers[i].value_len + 1);
                         header_addr = strncpy(
                                 header_addr, headers[i].value,
                                 headers[i].value_len);
@@ -143,7 +143,7 @@ void * run_web_subscriber(void * _d) {
             }
         } else if (path_len > 5 && strncmp("/api/", path, 5) == 0) {
             free(addr);
-            // /api/
+            // /api/ TODO: implement this later
             close(sock);
         } else {
             free(addr);

@@ -284,7 +284,7 @@ char ** stream_names(struct published_stream_map * map, int * num_streams) {
         struct published_stream_node * node = map->buckets[i];
 
         while (node != NULL) {
-            char * name = malloc(sizeof(char) * strlen(node->data->name));
+            char * name = malloc(strlen(node->data->name));
             name = strcpy(name, node->data->name);
 
             assert(stream_names_index < map->num_publishers);

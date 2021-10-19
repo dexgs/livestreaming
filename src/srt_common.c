@@ -28,7 +28,7 @@ void start_srt_thread(
 #define SRT_STREAMID_MAX_LEN 512
 
 char * get_socket_stream_id(SRTSOCKET sock) {
-    char * name = malloc(sizeof(char) * SRT_STREAMID_MAX_LEN);
+    char * name = malloc(SRT_STREAMID_MAX_LEN);
     int name_len = SRT_STREAMID_MAX_LEN;
     srt_getsockflag(sock, SRTO_STREAMID, name, &name_len);
     name = realloc(name, name_len + 1);
