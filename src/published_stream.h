@@ -15,8 +15,10 @@ struct published_stream_data {
     pthread_mutex_t srt_subscribers_lock;
     struct srt_subscriber_node * srt_subscribers;
 
-    pthread_mutex_t webrtc_subscribers_lock;
-    struct webrtc_subscriber_node * webrtc_subscribers;
+    pthread_mutex_t web_subscribers_lock;
+    struct web_subscriber_node * web_subscribers;
+
+    pthread_mutex_t access_lock;
 };
 
 // called from outside the thread for a stream
@@ -32,13 +34,12 @@ void remove_srt_subscriber_node(
         struct srt_subscriber_node * subscriber);
 
 // called from outside the thread for a stream
-void add_webrtc_subscriber(struct published_stream_data * data);
+void add_web_subscriber(struct published_stream_data * data, int sock);
 // called from inside the thread for a stream if sending data failed
 // its implementation assumes webrtc_subscribers_lock has been acquired
-void remove_webrtc_subscriber_node(
+void remove_web_subscriber_node(
         struct published_stream_data * data,
-        struct webrtc_subscriber_node * subscriber);
-
+        struct web_subscriber_node * subscriber);
 
 
 struct srt_subscriber_node {
@@ -47,9 +48,10 @@ struct srt_subscriber_node {
     struct srt_subscriber_node * prev;
 };
 
-struct webrtc_subscriber_node {
-    struct webrtc_subscriber_node * next;
-    struct webrtc_subscriber_node * prev;
+struct web_subscriber_node {
+    int sock;
+    struct web_subscriber_node * next;
+    struct web_subscriber_node * prev;
 };
 
 
@@ -77,6 +79,8 @@ struct published_stream_data * add_stream_to_map(
 void remove_stream_from_map(
         struct published_stream_map * map, const char * name);
 
+// This function locks the `acces_lock` member of the returned data. It must be
+// properly unlocked by the caller.
 struct published_stream_data * get_stream_from_map(
         struct published_stream_map * map, const char * name);
 

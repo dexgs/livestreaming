@@ -66,7 +66,7 @@ char * authenticate(
         + strlen(type_str)
         + strlen(addr)
         + strlen(stream_name)
-        + 4;
+        + 6;
     char * command = malloc(sizeof(char) * command_len);
     // Set first char to the null character to avoid garbage data causing
     // problems
@@ -77,8 +77,23 @@ char * authenticate(
     strcat(command, type_str);
     strcat(command, " ");
     strcat(command, addr);
-    strcat(command, " ");
+    strcat(command, " '");
     strcat(command, stream_name);
+    strcat(command, "'");
+
+    // Sanitize command as `popen` implicitly calls `sh -c`
+    for (size_t i = 0; i < command_len; i++) {
+        char c = command[i];
+        if (
+                c == '$' || c == '(' || c == ')' || c == '[' || c == ']'
+                || c == '<' || c == '>' || c == '|' || c == '\n' || c == '\\'
+                || c == '&' || c == '*' || c == '#' || c == '~' || c == '!'
+                || c == '`' || c == ';')
+        {
+            free(command);
+            return NULL;
+        }
+    }
 
     // call `auth_command` with arguments `type_str addr stream_name`
     FILE * p;
@@ -153,7 +168,7 @@ bool max_pending_connections_exceeded(struct authenticator * auth) {
 
 
 
-char * sockaddr_to_string(struct sockaddr_storage * addr, int addr_len) {
+char * sockaddr_to_string(struct sockaddr * addr, int addr_len) {
     char * addr_str = malloc(sizeof(char) * (NI_MAXHOST + 1 + NI_MAXSERV));
     char * port_str = malloc(sizeof(char) * NI_MAXSERV);
     getnameinfo(

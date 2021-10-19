@@ -5,6 +5,7 @@ SRT and HTTP. It is the suck-ccessor to [diarrhea](https://git.extremelycorporat
 
 ## Dependencies
 
-ShaRT depends on [SRT](https://github.com/Haivision/srt) version `1.4.4` against
-which it links statically. It also depends on `libcrypto`, `libcurl`, and 
-`libpthread` being available on the host system.
+ShaRT depends on [SRT](https://github.com/Haivision/srt) version `1.4.4` and
+[PicoHTTPParser](https://github.com/h2o/picohttpparser) against which it links
+statically. It also depends on `libcrypto` and `libpthread` being available on
+the host system.

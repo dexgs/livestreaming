@@ -1,6 +1,8 @@
 #ifndef SHART_CONFIG_H_
 #define SHART_CONFIG_H_
 
+#include <stdbool.h>
+
 #define DEFAULT_SRT_PUBLISH_PORT 9991
 #define DEFAULT_SRT_PUBLISH_PASSPHRASE ""
 #define DEFAULT_SRT_SUBSCRIBE_PORT 1234
@@ -10,6 +12,7 @@
 #define DEFAULT_MAX_SUBSCRIBERS_PER_PUBLISHER 0
 #define DEFAULT_MAX_PENDING_CONNECTIONS 0
 #define DEFAULT_AUTH_COMMAND "exit 0"
+#define DEFAULT_READ_WEB_IP_FROM_HEADERS false
 
 #define HELP_MESSAGE "USAGE:\n\
 --srt-publish-port <PORT>            set port to use listen for SRT publishers \n\
@@ -34,7 +37,9 @@
                                         (0 for no limit) \n\
 \n\
 --auth-command <COMMAND>             Command to execute to authenticate connections\n\
-\n"
+\n\
+--read-web-ip-from-headers <y/n>     If this option is passed, parse the IP address\n\
+                                        for web connections from requested headers.\n"
 
 
 
@@ -54,6 +59,8 @@ struct shart_config {
     unsigned int max_pending_connections;
     // Command to execute to authenticate publish and subscribe requests
     char * auth_command;
+    // Whether or not to read web IP from request headers
+    bool read_web_ip_from_headers;
 };
 
 // Assigns values to shart_config given command line args

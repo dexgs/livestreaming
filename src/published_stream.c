@@ -1,10 +1,24 @@
 #include <pthread.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
 #include "published_stream.h"
 #include "srt/srt.h"
+
+
+void increment_num_subscribers(struct published_stream_data * data, int inc) {
+    int mutex_lock_err;
+    // Increment num_subscribers
+    mutex_lock_err = pthread_mutex_lock(&data->num_subscribers_lock);
+    assert(mutex_lock_err == 0);
+
+    data->num_subscribers += inc;
+
+    mutex_lock_err = pthread_mutex_unlock(&data->num_subscribers_lock);
+    assert(mutex_lock_err == 0);
+}
 
 
 struct published_stream_data * create_published_stream_data(
@@ -25,16 +39,21 @@ struct published_stream_data * create_published_stream_data(
     assert(mutex_init_err == 0);
     data->srt_subscribers_lock = srt_subscribers_lock;
 
-    pthread_mutex_t webrtc_subscribers_lock;
-    mutex_init_err = pthread_mutex_init(&webrtc_subscribers_lock, NULL);
+    pthread_mutex_t web_subscribers_lock;
+    mutex_init_err = pthread_mutex_init(&web_subscribers_lock, NULL);
     assert(mutex_init_err == 0);
-    data->webrtc_subscribers_lock = webrtc_subscribers_lock;
+    data->web_subscribers_lock = web_subscribers_lock;
+
+    pthread_mutex_t access_lock;
+    mutex_init_err = pthread_mutex_init(&access_lock, NULL);
+    assert(mutex_init_err == 0);
+    data->access_lock = access_lock;
 
     data->sock = sock;
     data->name = name;
     data->num_subscribers = 0;
     data->srt_subscribers = NULL;
-    data->webrtc_subscribers = NULL;
+    data->web_subscribers = NULL;
     return data;
 }
 
@@ -72,14 +91,7 @@ void add_srt_subscriber(struct published_stream_data * data, SRTSOCKET sock) {
     mutex_lock_err = pthread_mutex_unlock(&data->srt_subscribers_lock);
     assert(mutex_lock_err == 0);
 
-    // Increment num_subscribers
-    mutex_lock_err = pthread_mutex_lock(&data->num_subscribers_lock);
-    assert(mutex_lock_err == 0);
-
-    data->num_subscribers++;
-
-    mutex_lock_err = pthread_mutex_unlock(&data->num_subscribers_lock);
-    assert(mutex_lock_err == 0);
+    increment_num_subscribers(data, 1);
 }
 
 
@@ -96,22 +108,52 @@ void remove_srt_subscriber_node(
     // Close socket
     srt_close(subscriber->sock);
 
-    int mutex_lock_err;
-
-    // Decrement num_subscribers
-    mutex_lock_err = pthread_mutex_lock(&data->num_subscribers_lock);
-    assert(mutex_lock_err == 0);
-
-    data->num_subscribers--;
-
-    mutex_lock_err = pthread_mutex_unlock(&data->num_subscribers_lock);
-    assert(mutex_lock_err == 0);
-
+    increment_num_subscribers(data, -1);
     // Free memory
     free(subscriber);
 }
 
 
+void add_web_subscriber(struct published_stream_data * data, int sock) {
+    struct web_subscriber_node * subscriber =
+        malloc(sizeof(struct web_subscriber_node));
+
+    subscriber->sock = sock;
+    subscriber->prev = NULL;
+
+    int mutex_lock_err;
+
+    // Add subscriber
+    mutex_lock_err = pthread_mutex_lock(&data->web_subscribers_lock);
+    assert(mutex_lock_err == 0);
+
+    subscriber->next = data->web_subscribers;
+    data->web_subscribers = subscriber;
+
+    mutex_lock_err = pthread_mutex_unlock(&data->web_subscribers_lock);
+    assert(mutex_lock_err == 0);
+
+    increment_num_subscribers(data, 1);
+}
+
+
+void remove_web_subscriber_node(
+        struct published_stream_data * data,
+        struct web_subscriber_node * subscriber)
+{
+    // Update pointers
+    if (subscriber == data->web_subscribers) data->web_subscribers = subscriber->next;
+    if (subscriber->prev != NULL) subscriber->prev->next = subscriber->next;
+    if (subscriber->next != NULL) subscriber->next->prev = subscriber->prev;
+
+    // Close socket
+    close(subscriber->sock);
+
+    increment_num_subscribers(data, -1);
+
+    // Free memory
+    free(subscriber);
+}
 
 
 // djb2
@@ -202,7 +244,8 @@ bool max_publishers_exceeded(struct published_stream_map * map) {
     mutex_lock_err = pthread_mutex_lock(&map->map_lock);
     assert(mutex_lock_err == 0);
 
-    bool max_publishers_exceeded = map->num_publishers > map->max_publishers;
+    bool max_publishers_exceeded =
+        map->max_publishers > 0 && map->num_publishers >= map->max_publishers;
 
     mutex_lock_err = pthread_mutex_unlock(&map->map_lock);
     assert(mutex_lock_err == 0);
@@ -340,6 +383,9 @@ struct published_stream_data * get_stream_from_map(
     struct published_stream_node * node = get_node_with_name(map, name);
     if (node != NULL) data = node->data;
 
+    mutex_lock_err = pthread_mutex_lock(&data->access_lock);
+    if (mutex_lock_err != 0) data = NULL;
+
     mutex_lock_err = pthread_mutex_unlock(&map->map_lock);
     assert(mutex_lock_err == 0);
 
@@ -364,7 +410,8 @@ bool max_subscribers_exceeded(
         assert(mutex_lock_err == 0);
 
         max_subscribers_exceeded =
-            data->num_subscribers > map->max_subscribers_per_publisher;
+            map->max_subscribers_per_publisher > 0
+            && data->num_subscribers >= map->max_subscribers_per_publisher;
 
         mutex_lock_err = pthread_mutex_unlock(&data->num_subscribers_lock);
         assert(mutex_lock_err == 0);

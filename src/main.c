@@ -1,9 +1,11 @@
 #include <signal.h>
 #include <stdio.h>
+#include <limits.h>
 #include "config.h"
 #include "authenticator.h"
 #include "published_stream.h"
 #include "srt_listener.h"
+#include "web_listener.h"
 
 int main(int argc, char * argv[]) {
     struct shart_config * c = parse_args_to_config(argc, argv);
@@ -17,10 +19,10 @@ int main(int argc, char * argv[]) {
             c->srt_publish_passphrase, c->srt_subscribe_passphrase,
             auth, map);
 
-    // start_web_listener(c->web_port, auth, map);
+    start_web_listener(c->web_port, c->read_web_ip_from_headers, auth, map);
 
-    // Block until interrupted
-    sigset_t set;
-    int sig = 2;
-    sigwait(&set, &sig);
+    // Block main thread forever
+    while (true) {
+        sleep(UINT_MAX);
+    }
 }

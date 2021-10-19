@@ -2,14 +2,15 @@ THIRDPARTY_DIR = ./thirdparty
 
 srt_static = $(THIRDPARTY_DIR)/srt/build/libsrt.a
 
-LDFLAGS = $(srt_static) -lpthread -lcrypto -lcurl
+LDFLAGS = $(srt_static) -lpthread -lcrypto
 CFLAGS = -Wall -Wextra
 
 .DEFAULT_GOAL := ShaRT
 
-all: srt ShaRT
+all: srt picohttpparser ShaRT
 
-src = $(wildcard src/*.c)
+src = $(wildcard src/*.c) \
+	  thirdparty/picohttpparser/picohttpparser.c
 obj = $(src:.c=.o)
 
 ShaRT: $(obj)
@@ -31,7 +32,12 @@ srt:
 	cp $(THIRDPARTY_DIR)/$@/srtcore/*.h src/$@/
 	cp $(THIRDPARTY_DIR)/$@/build/*.h src/$@/
 
+.PHONY: picohttpparser
+picohttpparser:
+	@mkdir -p src/$@
+	cp $(THIRDPARTY_DIR)/$@/*.h src/$@/
+
 .PHONY: clean
 clean:
-	rm -f $(obj) ShaRT
+	rm -f $(obj) bin/ShaRT
 	rm -rf $(THIRDPARTY_DIR)/srt/_build
