@@ -37,6 +37,21 @@ struct authenticator * create_authenticator(
     return auth;
 }
 
+bool contains_illegal_chars(const char * str, size_t str_len) {
+    // Sanitize command as `popen` implicitly calls `sh -c`
+    for (size_t i = 0; i < str_len; i++) {
+        char c = str[i];
+        if (
+                c == '$' || c == '(' || c == ')' || c == '[' || c == ']'
+                || c == '<' || c == '>' || c == '|' || c == '\n' || c == '\\'
+                || c == '&' || c == '*' || c == '#' || c == '~' || c == '!'
+                || c == '`' || c == ';')
+        {
+            return true;
+        }
+    }
+    return false;
+}
 
 #define PUBLISH_STRING "PUBLISH"
 #define SUBSCRIBE_STRING "SUBSCRIBE"
@@ -61,11 +76,14 @@ char * authenticate(
         type_str = SUBSCRIBE_STRING;
     }
 
+    size_t name_len = strlen(stream_name);
+    size_t addr_len = strlen(addr);
+
     size_t command_len =
         strlen(auth->auth_command)
         + strlen(type_str)
-        + strlen(addr)
-        + strlen(stream_name)
+        + addr_len
+        + name_len
         + 6;
     char * command = malloc(sizeof(char) * command_len);
     // Set first char to the null character to avoid garbage data causing
@@ -82,18 +100,14 @@ char * authenticate(
     strcat(command, "'");
 
     // Sanitize command as `popen` implicitly calls `sh -c`
-    for (size_t i = 0; i < command_len; i++) {
-        char c = command[i];
-        if (
-                c == '$' || c == '(' || c == ')' || c == '[' || c == ']'
-                || c == '<' || c == '>' || c == '|' || c == '\n' || c == '\\'
-                || c == '&' || c == '*' || c == '#' || c == '~' || c == '!'
-                || c == '`' || c == ';')
-        {
-            free(command);
-            return NULL;
-        }
+    if (
+            contains_illegal_chars(addr, addr_len)
+            || contains_illegal_chars(stream_name, name_len))
+    {
+        free(command);
+        return NULL;
     }
+
 
     // call `auth_command` with arguments `type_str addr stream_name`
     FILE * p;
