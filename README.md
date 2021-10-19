@@ -17,7 +17,7 @@ Clone the repository and run `make all` in its directory. Make sure you have
 
 ## Usage
 
-See USAGE.md
+See [USAGE.md](USAGE.md)
 
 ## Web Player
 
