@@ -37,9 +37,9 @@ struct authenticator * create_authenticator(
     return auth;
 }
 
-bool contains_illegal_chars(const char * str, size_t str_len) {
+bool contains_illegal_chars(const char * str) {
     // Sanitize command as `popen` implicitly calls `sh -c`
-    for (size_t i = 0; i < str_len; i++) {
+    for (size_t i = 0; str[i] != '\0'; i++) {
         char c = str[i];
         if (
                 c == '$' || c == '(' || c == ')' || c == '[' || c == ']'
@@ -53,8 +53,8 @@ bool contains_illegal_chars(const char * str, size_t str_len) {
     return false;
 }
 
-#define PUBLISH_STRING "PUBLISH"
-#define SUBSCRIBE_STRING "SUBSCRIBE"
+const char * PUBLISH_STRING = "PUBLISH";
+const char * SUBSCRIBE_STRING = "SUBSCRIBE";
 
 char * authenticate(
         struct authenticator * auth, bool is_publisher,
@@ -69,23 +69,15 @@ char * authenticate(
     mutex_lock_err = pthread_mutex_unlock(&auth->num_connections_lock);
     assert(mutex_lock_err == 0);
 
-    char * type_str;
-    if (is_publisher) {
-        type_str = PUBLISH_STRING;
-    } else {
-        type_str = SUBSCRIBE_STRING;
-    }
-
-    size_t name_len = strlen(stream_name);
-    size_t addr_len = strlen(addr);
+    const char * type_str = is_publisher ? PUBLISH_STRING : SUBSCRIBE_STRING;
 
     size_t command_len =
         strlen(auth->auth_command)
         + strlen(type_str)
-        + addr_len
-        + name_len
+        + strlen(addr)
+        + strlen(stream_name)
         + 6;
-    char * command = malloc(sizeof(char) * command_len);
+    char * command = malloc(command_len);
     // Set first char to the null character to avoid garbage data causing
     // problems
     command[0] = '\0';
@@ -101,8 +93,8 @@ char * authenticate(
 
     // Sanitize command as `popen` implicitly calls `sh -c`
     if (
-            contains_illegal_chars(addr, addr_len)
-            || contains_illegal_chars(stream_name, name_len))
+            contains_illegal_chars(addr)
+            || contains_illegal_chars(stream_name))
     {
         free(command);
         return NULL;
@@ -117,7 +109,7 @@ char * authenticate(
     if (p != NULL) {
         size_t inc = strlen(stream_name);
         size_t output_stream_name_len = strlen(stream_name);
-        output_stream_name = malloc(sizeof(char) * output_stream_name_len);
+        output_stream_name = malloc(output_stream_name_len);
 
         size_t chars_so_far = 0;
         char ch;
@@ -167,12 +159,8 @@ bool max_pending_connections_exceeded(struct authenticator * auth) {
     mutex_lock_err = pthread_mutex_lock(&auth->num_connections_lock);
     assert(mutex_lock_err == 0);
 
-    bool exceeded;
-    if (auth->num_pending_connections >= auth->max_pending_connections) {
-        exceeded = true;
-    } else {
-        exceeded = false;
-    }
+    bool exceeded =
+        auth->num_pending_connections >= auth->max_pending_connections;
 
     mutex_lock_err = pthread_mutex_unlock(&auth->num_connections_lock);
     assert(mutex_lock_err == 0);
@@ -183,8 +171,8 @@ bool max_pending_connections_exceeded(struct authenticator * auth) {
 
 
 char * sockaddr_to_string(struct sockaddr * addr, int addr_len) {
-    char * addr_str = malloc(sizeof(char) * (NI_MAXHOST + 1 + NI_MAXSERV));
-    char * port_str = malloc(sizeof(char) * NI_MAXSERV);
+    char * addr_str = malloc(NI_MAXHOST + 1 + NI_MAXSERV);
+    char * port_str = malloc(NI_MAXSERV);
     getnameinfo(
             (struct sockaddr *)addr, addr_len, addr_str,
             NI_MAXHOST, port_str, NI_MAXSERV, NI_NUMERICHOST);

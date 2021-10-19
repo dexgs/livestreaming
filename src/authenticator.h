@@ -5,9 +5,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#define PUBLISH_STRING "PUBLISH"
-#define SUBSCRIBE_STRING "SUBSCRIBE"
-
 struct authenticator;
 
 struct authenticator * create_authenticator(
