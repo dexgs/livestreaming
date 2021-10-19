@@ -45,7 +45,8 @@ ShaRT accepts the following command line arguments:
 
 
 #### `--auth-command COMMAND`
-- Command to execute to authenticate connections.
+- Command to execute to authenticate connections. (If you just want to set a
+    password for broadcasting streams, see `--str-publish-passphrase`)
 
 - `COMMAND` will be called as such: `COMMAND TYPE ADDRESS NAME` where `COMMAND`
     is the command to run, `TYPE` is either `PUBLISH` or `SUBSCRIBE` depending
