@@ -1,0 +1,80 @@
+html {
+    font-family: sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+    html {
+        background: #060606;
+    }
+}
+
+body {
+    max-width: 90%;
+    width: 20cm;
+    margin:auto;
+}
+
+h1 {
+    color: dodgerblue;
+}
+
+h1::before {
+    --outline: rgba(255, 255, 255, 0.2);
+    content: "🎥 ";
+    text-shadow: 1px -1px 0 var(--outline),
+                 -1px 1px 0 var(--outline),
+                 -1px 1px 0 var(--outline),
+                 1px -1px 0 var(--outline),
+                 1px 1px 0 var(--outline),
+                 -1px -1px 0 var(--outline);
+}
+
+video#stream-player {
+    width: 100%;
+    background-color: black;
+    border: 1px solid gray;
+}
+
+form#stream-setup {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 5px;
+}
+
+form#stream-setup > input#stream-name {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+    form#stream-setup > label {
+        color: lightgray;
+    }
+}
+
+form#stream-setup > * {
+    font-size: 13pt;
+}
+
+p#instructions {
+    width: 100%;
+    text-align: center;
+    color: gray;
+}
+
+footer {
+    clear: both;
+    width: 100%;
+    text-align: center;
+    font-size: 10pt;
+    position: fixed;
+    bottom: 5px;
+    left: 0;
+    color: gray;
+}
+
+a {
+    color: dodgerblue;
+}

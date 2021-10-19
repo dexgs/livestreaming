@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8"/>
+        <title>Live Streaming</title>
+        <link rel="stylesheet" href="css/styles.css"/>
+    </head>
+    <body>
+        <h1>Live Streaming</h1>
+
+        <noscript>
+            <p class="error">
+                This page requires JavaScript!
+            </p>
+        </noscript>
+
+        <video controls id="stream-player"></video>
+
+        <form id="stream-setup" onsubmit="return false;">
+            <label for="stream-name">Stream name:</label>
+            <input id="stream-name" name="stream-name" type="text"/>
+            <input type="submit" value="Open Stream"/>
+        </form>
+
+        <p id="instructions">
+            To watch a stream, type its name into the above text field and click
+            the "Open Stream" button.
+        </p>
+
+        <footer>
+            Playback in browser is achieved with
+            <a href="https://github.com/xqq/mpegts.js">mpegts.js</a>
+            licensed under the
+            <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache License 2.0</a>
+        </footer>
+    </body>
+
+    <script src="js/mpegts/mpegts.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/play_stream.js"></script>
+</html>
