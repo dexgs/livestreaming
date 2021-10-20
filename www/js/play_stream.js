@@ -17,7 +17,7 @@ function playStream() {
             isLive: true,
             url: stream_backend_url + "/stream/" + streamName,
             lazyLoad: false,
-            enableStashBuffer: false,
+            enableStashBuffer: true,
         });
         player.attachMediaElement(videoElement);
         player.load();
