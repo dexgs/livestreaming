@@ -44,6 +44,8 @@ form#stream-setup > fieldset {
     display: flex;
     gap: 5px;
     align-items: center;
+    padding: 5px 0;
+    border: none;
 }
 
 form#stream-setup input#stream-name {
