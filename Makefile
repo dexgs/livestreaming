@@ -1,6 +1,6 @@
 THIRDPARTY_DIR = ./thirdparty
 
-srt_static = $(THIRDPARTY_DIR)/srt/build/libsrt.a
+srt_static = $(THIRDPARTY_DIR)/srt/_build/libsrt.a
 
 LDFLAGS = $(srt_static) -lpthread -lcrypto
 CFLAGS = -Wall -Wextra
