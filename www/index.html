@@ -17,6 +17,15 @@
         <video controls id="stream-player"></video>
 
         <form id="stream-setup" onsubmit="return false;">
+            <label for="enable-buffer">Enable buffer:</label>
+            <input id="enable-buffer" name="enable-buffer" type="checkbox" checked="checked" onchange="document.getElementById('buffer-size').disabled = !this.checked;"/>
+
+            <label for="buffer-size">Buffer size:</label>
+            <input id="buffer-size" name="buffer-size" type="range" min=0 max=1000 value="384" oninput="this.nextElementSibling.value = this.value + 'kB'"/>
+            <output>384kB</output>
+
+            <div style="flex-basis: 100%;"></div>
+
             <label for="stream-name">Stream name:</label>
             <input id="stream-name" name="stream-name" type="text"/>
             <input type="submit" value="Open Stream"/>
