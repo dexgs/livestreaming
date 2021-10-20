@@ -72,7 +72,7 @@ form#stream-setup * {
     font-size: 13pt;
 }
 
-p#instructions {
+p.instructions {
     width: 100%;
     text-align: center;
     color: gray;
