@@ -112,7 +112,7 @@ char * authenticate(
         output_stream_name = malloc(output_stream_name_len);
 
         size_t chars_so_far = 0;
-        char ch;
+        signed char ch;
         while ((ch = fgetc(p)) != EOF) {
             // If output_stream_name doesn't have room for ch
             if (output_stream_name_len <= chars_so_far) {
