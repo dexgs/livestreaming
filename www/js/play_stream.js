@@ -5,6 +5,8 @@ function setup() {
     document.getElementById("stream-name").value = hash.substring(1, hash.length);
     let form = document.getElementById("stream-setup");
     form.onsubmit = playStream;
+    let bufferSizeInput = document.getElementById("buffer-size");
+    bufferSizeInput.nextElementSibling.value = bufferSizeInput.value + "kB";
 }
 
 function playStream() {
