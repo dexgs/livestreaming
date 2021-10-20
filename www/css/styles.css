@@ -41,6 +41,7 @@ form#stream-setup {
     align-items: center;
     gap: 5px;
     margin-top: 5px;
+    flex-wrap: wrap;
 }
 
 form#stream-setup > input#stream-name {
@@ -48,8 +49,17 @@ form#stream-setup > input#stream-name {
     min-width: 0;
 }
 
+form#stream-setup > input#buffer-size {
+    flex-grow: 1;
+}
+
+form#stream-setup > output {
+    width: 5ch;
+    text-align: center;
+}
+
 @media (prefers-color-scheme: dark) {
-    form#stream-setup > label {
+    form#stream-setup > label, form#stream-setup > output {
         color: lightgray;
     }
 }
