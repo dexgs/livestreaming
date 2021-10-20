@@ -18,6 +18,7 @@
 
         <form id="stream-setup" onsubmit="return false;">
             <fieldset title="If you disable the buffer, you can achieve lower latency at the cost of stability. If you want a shorter delay, lower the buffer size or disable the buffer entirely. If the stream playback is choppy/unstable, increase the buffer size.">
+                ❓
                 <label for="enable-buffer">Enable buffer:</label>
                 <input id="enable-buffer" name="enable-buffer" type="checkbox" checked="checked" onchange="document.getElementById('buffer-size').disabled = !this.checked;"/>
 
