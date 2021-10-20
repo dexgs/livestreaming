@@ -37,23 +37,25 @@ video#stream-player {
 
 form#stream-setup {
     width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 5px;
     margin-top: 5px;
-    flex-wrap: wrap;
 }
 
-form#stream-setup > input#stream-name {
+form#stream-setup > fieldset {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+form#stream-setup input#stream-name {
     flex-grow: 1;
     min-width: 0;
 }
 
-form#stream-setup > input#buffer-size {
+form#stream-setup input#buffer-size {
     flex-grow: 1;
 }
 
-form#stream-setup > output {
+form#stream-setup output {
     width: 5ch;
     text-align: center;
 }
