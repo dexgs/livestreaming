@@ -66,7 +66,7 @@ form#stream-setup output {
     }
 }
 
-form#stream-setup > * {
+form#stream-setup * {
     font-size: 13pt;
 }
 
