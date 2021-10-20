@@ -30,7 +30,7 @@ srt:
 	
 	@mkdir -p src/$@
 	cp $(THIRDPARTY_DIR)/$@/srtcore/*.h src/$@/
-	cp $(THIRDPARTY_DIR)/$@/build/*.h src/$@/
+	cp $(THIRDPARTY_DIR)/$@/_build/*.h src/$@/
 
 .PHONY: picohttpparser
 picohttpparser:
