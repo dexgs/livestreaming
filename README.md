@@ -12,8 +12,11 @@ the host system.
 
 ## Building
 
-Clone the repository and run `make all` in its directory. Make sure you have
-`cmake` installed (required to build SRT).
+Clone the repository
+(pass `--recurse-submodules ` or run 
+`git submodule update --init --recursive` in the project directory after cloning)
+and run `make all` in its directory. Make sure you have `cmake` installed
+(required to build SRT).
 
 ## Usage
 
