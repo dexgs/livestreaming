@@ -36,6 +36,10 @@ void start_web_listener(
     addr.sin_port = htons(port);
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
+
+    bool yes = true;
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+
     int bind_err = bind(sock, (struct sockaddr *) &addr, sizeof(addr));
     assert(bind_err == 0);
 
