@@ -9,11 +9,11 @@ function setup() {
     bufferSizeInput.nextElementSibling.value = bufferSizeInput.value + "kB";
 }
 
-var playerStarted = false;
+var lastStreamURL = "";
 function startPlayer() {
-    if (!playerStarted) {
+    if (document.getElementById("stream-name").value != lastStreamURL) {
         playStream();
-        playerStarted = true;
+        lastStreamURL = document.getElementById("stream-name").value;
     }
 }
 
