@@ -66,6 +66,7 @@ void * run_web_subscriber(void * _d) {
     char buf[1024];
     ssize_t bytes_read = read(sock, buf, sizeof(buf));
     if (bytes_read < 0) {
+        close(sock);
         free(addr);
         return NULL;
     }
@@ -83,72 +84,72 @@ void * run_web_subscriber(void * _d) {
             buf, sizeof(buf), &method, &method_len, &path,
             &path_len,&minor_version, headers, &num_headers, 0);
 
-    if (parse_err > 0) {
-        if (path_len > 8 && strncmp("/stream/", path, 8) == 0) {
-            // /stream/
-            char * name = strip_prefix("/stream/", path, path_len);
+    if (parse_err <= 0) return NULL;
 
-            if (read_web_ip_from_headers) {
-                // Parse IP from X-Forwarded-For header
-                for (size_t i = 0; i < num_headers; i++) {
-                    if (strncmp(
-                                "X-Forwarded-For", headers[i].name,
-                                headers[i].name_len) == 0) 
-                    {
-                        char * header_addr = 
-                            malloc(headers[i].value_len + 1);
-                        header_addr = strncpy(
-                                header_addr, headers[i].value,
-                                headers[i].value_len);
-                        header_addr[headers[i].value_len] = '\0';
-                        free(addr);
-                        addr = header_addr;
-                        break;
-                    }
+    if (path_len > 8 && strncmp("/stream/", path, 8) == 0) {
+        // /stream/
+        char * name = strip_prefix("/stream/", path, path_len);
+
+        if (read_web_ip_from_headers) {
+            // Parse IP from X-Forwarded-For header
+            for (size_t i = 0; i < num_headers; i++) {
+                if (strncmp(
+                            "X-Forwarded-For", headers[i].name,
+                            headers[i].name_len) == 0) 
+                {
+                    char * header_addr = 
+                        malloc(headers[i].value_len + 1);
+                    header_addr = strncpy(
+                            header_addr, headers[i].value,
+                            headers[i].value_len);
+                    header_addr[headers[i].value_len] = '\0';
+                    free(addr);
+                    addr = header_addr;
+                    break;
                 }
             }
+        }
 
-            char * processed_name = authenticate(auth, false, addr, name);
-            free(name);
-            free(addr);
-            name = processed_name;
+        char * processed_name = authenticate(auth, false, addr, name);
+        free(name);
+        free(addr);
+        name = processed_name;
 
-            // Close connection prematurely if...
-            if (
-                    // If authentication failed
-                    name == NULL
-                    // If there is no active stream with the requested name
-                    || !stream_name_in_map(map, name)
-                    // If the maximum number of subscribers to the stream would
-                    // be exceeded
-                    || max_subscribers_exceeded(map, name))
-            {
-                close(sock);
-                return NULL;
-            }
-
-            struct published_stream_data * data = get_stream_from_map(map, name);
-            if (data != NULL) {
-                char * response = 
-                    "HTTP/1.1 200 OK\r\n"
-                    "Access-Control-Allow-Origin: *\r\n"
-                    "Content-Type: video/mp2t\r\n"
-                    "Transfer-Encoding: chunked\r\n\r\n";
-                write(sock, response, strlen(response));
-                add_web_subscriber(data, sock);
-                int mutex_lock_err = pthread_mutex_unlock(&data->access_lock);
-                assert(mutex_lock_err == 0);
-            } else {
-                close(sock);
-            }
-        } else if (path_len > 5 && strncmp("/api/", path, 5) == 0) {
-            free(addr);
-            // /api/ TODO: implement this later
+        // Close connection prematurely if...
+        if (
+                // If authentication failed
+                name == NULL
+                // If there is no active stream with the requested name
+                || !stream_name_in_map(map, name)
+                // If the maximum number of subscribers to the stream would
+                // be exceeded
+                || max_subscribers_exceeded(map, name))
+        {
             close(sock);
+            return NULL;
+        }
+
+        struct published_stream_data * data = get_stream_from_map(map, name);
+        if (data != NULL) {
+            char * response = 
+                "HTTP/1.1 200 OK\r\n"
+                "Access-Control-Allow-Origin: *\r\n"
+                "Content-Type: video/mp2t\r\n"
+                "Transfer-Encoding: chunked\r\n\r\n";
+            write(sock, response, strlen(response));
+            add_web_subscriber(data, sock);
+            int mutex_lock_err = pthread_mutex_unlock(&data->access_lock);
+            assert(mutex_lock_err == 0);
         } else {
-            free(addr);
             close(sock);
         }
+    } else if (path_len > 5 && strncmp("/api/", path, 5) == 0) {
+        free(addr);
+        // /api/ TODO: implement this later
+        close(sock);
+    } else {
+        free(addr);
+        close(sock);
     }
 
     return NULL;

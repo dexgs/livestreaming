@@ -9,6 +9,14 @@ function setup() {
     bufferSizeInput.nextElementSibling.value = bufferSizeInput.value + "kB";
 }
 
+var playerStarted = false;
+function startPlayer() {
+    if (!playerStarted) {
+        playStream();
+        playerStarted = true;
+    }
+}
+
 function playStream() {
     if (mpegts.getFeatureList().mseLivePlayback) {
         let streamName = document.getElementById("stream-name").value;
