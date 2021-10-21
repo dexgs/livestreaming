@@ -69,6 +69,7 @@ form#stream-setup span.info {
     border-radius: 50%;
     line-height: 18px;
     text-align: center;
+    cursor: help;
 }
 
 @media (prefers-color-scheme: dark) {
