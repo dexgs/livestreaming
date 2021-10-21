@@ -135,8 +135,8 @@ char * authenticate(
             output_stream_name = NULL;
         } else if (chars_so_far == 0) {
             // If command had no output, default to stream_name
-            output_stream_name = realloc(output_stream_name, inc + 1);
-            output_stream_name = strcpy(output_stream_name, stream_name);
+            free(output_stream_name);
+            output_stream_name = strdup(stream_name);
         }
     }
 
