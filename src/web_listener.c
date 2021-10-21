@@ -68,10 +68,10 @@ void * run_web_listener(void * _d) {
     struct published_stream_map * map = d->map;
     free(d);
 
-    struct sockaddr_in client_addr;
-    unsigned int client_addr_len;
-
     while (true) {
+        struct sockaddr_in client_addr;
+        unsigned int client_addr_len;
+
         int client_sock = accept(
                 sock, (struct sockaddr *) &client_addr, &client_addr_len);
         if (client_sock < 0) continue;
