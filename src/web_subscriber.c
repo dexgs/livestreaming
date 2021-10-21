@@ -88,7 +88,13 @@ void * run_web_subscriber(void * _d) {
 
     if (8 <= path_len && strncmp("/stream/", path, 8) == 0) {
         // /stream/
-        char * name = strip_prefix("/stream/", path, path_len);
+        char * name;
+        if (path_len == 8) {
+            name = malloc(1);
+            name[0] = '\0';
+        } else {
+            name = strip_prefix("/stream/", path, path_len);
+        }
 
         if (read_web_ip_from_headers) {
             // Parse IP from X-Forwarded-For header
