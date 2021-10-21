@@ -86,7 +86,7 @@ void * run_web_subscriber(void * _d) {
 
     if (parse_err <= 0) return NULL;
 
-    if (path_len > 8 && strncmp("/stream/", path, 8) == 0) {
+    if (8 <= path_len && strncmp("/stream/", path, 8) == 0) {
         // /stream/
         char * name = strip_prefix("/stream/", path, path_len);
 
