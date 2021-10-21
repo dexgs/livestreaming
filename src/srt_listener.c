@@ -94,6 +94,7 @@ void start_srt_listener(
 
     pthread_err = pthread_create(&thread_handle, NULL, run_srt_listener, d);
     assert(pthread_err == 0);
+
     pthread_err = pthread_detach(thread_handle);
     assert(pthread_err == 0);
 }
