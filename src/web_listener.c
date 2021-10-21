@@ -37,8 +37,9 @@ void start_web_listener(
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
 
-    bool yes = true;
+    int yes = 1;
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+    setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &yes, sizeof(yes));
 
     int bind_err = bind(sock, (struct sockaddr *) &addr, sizeof(addr));
     assert(bind_err == 0);
@@ -74,7 +75,7 @@ void * run_web_listener(void * _d) {
 
         int client_sock = accept(
                 sock, (struct sockaddr *) &client_addr, &client_addr_len);
-        if (client_sock < 0) continue;
+        if (client_sock == -1) continue;
 
         if (max_pending_connections_exceeded(auth)) {
             close(client_sock);

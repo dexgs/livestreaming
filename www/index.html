@@ -14,7 +14,7 @@
             </p>
         </noscript>
 
-        <video controls id="stream-player" onplay="playStream();"></video>
+        <video controls id="stream-player" onplay="startPlayer();"></video>
 
         <form id="stream-setup" onsubmit="return false;">
             <fieldset title="If you disable the buffer, you can achieve lower latency at the cost of stability. If you want a shorter delay, lower the buffer size or disable the buffer entirely. If the stream playback is choppy/unstable, increase the buffer size.">
