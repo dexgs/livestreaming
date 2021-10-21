@@ -356,6 +356,9 @@ void remove_stream_from_map(
     }
 
     if (node != NULL) {
+        mutex_lock_err = pthread_mutex_lock(&node->data->access_lock);
+        assert(mutex_lock_err == 0);
+
         if (node == map->buckets[index]) map->buckets[index] = node->next;
         if (node->prev != NULL) node->prev->next = node->next;
         if (node->next != NULL) node->next->prev = node->prev;
