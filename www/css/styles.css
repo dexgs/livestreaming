@@ -58,7 +58,7 @@ form#stream-setup input#buffer-size {
 }
 
 form#stream-setup output {
-    width: 5ch;
+    width: 6ch;
     text-align: center;
 }
 
