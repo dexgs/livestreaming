@@ -105,11 +105,7 @@ void * srt_publisher(void * _d) {
     srt_close(sock);
     printf("`%s` stopped publishing `%s`\n", addr, name);
 
-    mutex_lock_err = pthread_mutex_lock(&data->access_lock);
-    assert(mutex_lock_err == 0);
-
     remove_stream_from_map(map, name);
-
     mutex_lock_err = pthread_mutex_unlock(&data->access_lock);
     assert(mutex_lock_err == 0);
 
