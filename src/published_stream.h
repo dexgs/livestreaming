@@ -5,6 +5,10 @@
 #include <pthread.h>
 #include "srt/srt.h"
 
+// Represents the data related to a single livestream.
+// It encapsulates the socket over which incoming data is received
+// as well ass access to the connections over which the stream is
+// broadcast (along with the locks required for safe use across threads).
 struct published_stream_data {
     SRTSOCKET sock;
     const char * name;
@@ -27,8 +31,8 @@ unsigned int get_num_subscribers(struct published_stream_data * data);
 // called from outside the thread for a stream
 void add_srt_subscriber(struct published_stream_data * data, SRTSOCKET sock);
 // called from inside the thread for a stream if sending data failed
-// its implementation assumes srt_subscribers_lock has been acquired and will
-// close the socket of the node that was removed.
+// its implementation assumes `srt_subscribers_lock` has been acquired
+// and will close the socket of the node that was removed.
 void remove_srt_subscriber_node(
         struct published_stream_data * data,
         struct srt_subscriber_node * subscriber);
@@ -36,7 +40,8 @@ void remove_srt_subscriber_node(
 // called from outside the thread for a stream
 void add_web_subscriber(struct published_stream_data * data, int sock);
 // called from inside the thread for a stream if sending data failed
-// its implementation assumes webrtc_subscribers_lock has been acquired
+// its implementation assumes `web_subscribers_lock` has been acquired
+// and will close the socket of the node that was removed.
 void remove_web_subscriber_node(
         struct published_stream_data * data,
         struct web_subscriber_node * subscriber);
@@ -56,6 +61,8 @@ struct web_subscriber_node {
 
 
 
+// Represents the mapping between stream names and their respective
+// `published_stream_data` instances.
 struct published_stream_map;
 
 struct published_stream_map * create_published_stream_map(
