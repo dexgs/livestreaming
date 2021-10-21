@@ -7,7 +7,7 @@
 
 // Represents the data related to a single livestream.
 // It encapsulates the socket over which incoming data is received
-// as well ass access to the connections over which the stream is
+// as well as access to the connections over which the stream is
 // broadcast (along with the locks required for safe use across threads).
 struct published_stream_data {
     SRTSOCKET sock;
@@ -22,6 +22,14 @@ struct published_stream_data {
     pthread_mutex_t web_subscribers_lock;
     struct web_subscriber_node * web_subscribers;
 
+    // `access_lock` is meant to allow things to be done with the
+    // `published_stream_data` struct after getting/removing it from the
+    // `published_stream_map` with the guarantee that the data will not be
+    // accessed in=between when the `publishe_stream_data` was gotten/removed
+    // from the `published_stream_map` and when the `published_stream_data` is
+    // used. It is locked by the `remove_stream_from_map` and `get_stream_from_map`
+    // functions and it is to be unlocked by the caller after the operations that
+    // need to be protected are done.
     pthread_mutex_t access_lock;
 };
 
@@ -82,11 +90,13 @@ char ** stream_names(struct published_stream_map * map, int * num_streams);
 struct published_stream_data * add_stream_to_map(
         struct published_stream_map * map, SRTSOCKET sock, const char * name);
 
-// This function does not free the published_stream_data with the given name
+// This function does not free the `published_stream_data` with the given name.
+// This function locks the `access_lock` member of the `published_stream_data`
+// with the given name (if it exists). It must be properly unlocked by the caller.
 void remove_stream_from_map(
         struct published_stream_map * map, const char * name);
 
-// This function locks the `acces_lock` member of the returned data. It must be
+// This function locks the `access_lock` member of the returned data. It must be
 // properly unlocked by the caller.
 struct published_stream_data * get_stream_from_map(
         struct published_stream_map * map, const char * name);
