@@ -62,8 +62,18 @@ form#stream-setup output {
     text-align: center;
 }
 
+form#stream-setup span.info {
+    width: 20px;
+    height: 20px;
+    border: 1px solid gray;
+    border-radius: 50%;
+    line-height: 18px;
+    text-align: center;
+    cursor: help;
+}
+
 @media (prefers-color-scheme: dark) {
-    form#stream-setup > label, form#stream-setup > output {
+    form#stream-setup label, form#stream-setup output, form#stream-setup span.info {
         color: lightgray;
     }
 }
