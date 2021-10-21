@@ -21,8 +21,14 @@ void start_srt_thread(
     set_flag_err = srt_setsockflag(sock, SRTO_DRIFTTRACER, &no, sizeof(no));
     assert(set_flag_err != SRT_ERROR);
 
+    int pthread_err;
     pthread_t thread_handle;
-    pthread_create(&thread_handle, NULL, thread_function, d);
+
+    pthread_err = pthread_create(&thread_handle, NULL, thread_function, d);
+    assert(pthread_err == 0);
+
+    pthread_err = pthread_detach(thread_handle);
+    assert(pthread_err == 0);
 }
 
 #define SRT_STREAMID_MAX_LEN 512

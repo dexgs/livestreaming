@@ -56,9 +56,13 @@ void start_web_listener(
     d->map = map;
 
     pthread_t thread_handle;
-    int pthread_init_err = pthread_create(
-            &thread_handle, NULL, run_web_listener, d);
-    assert(pthread_init_err == 0);
+    int pthread_err;
+
+    pthread_err = pthread_create(&thread_handle, NULL, run_web_listener, d);
+    assert(pthread_err == 0);
+
+    pthread_err = pthread_detach(thread_handle);
+    assert(pthread_err == 0);
 }
 
 void * run_web_listener(void * _d) {

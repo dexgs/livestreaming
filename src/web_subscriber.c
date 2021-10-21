@@ -31,8 +31,13 @@ void web_subscriber(
     d->map = map;
 
     pthread_t thread_handle;
-    int thread_err = pthread_create(&thread_handle, NULL, run_web_subscriber, d);
-    assert(thread_err == 0);
+    int pthread_err; 
+
+    pthread_err = pthread_create(&thread_handle, NULL, run_web_subscriber, d);
+    assert(pthread_err == 0);
+
+    pthread_err = pthread_detach(thread_handle);
+    assert(pthread_err == 0);
 }
 
 // Return heap allocated string with contents equal to str with `prefix` and
