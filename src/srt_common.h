@@ -22,6 +22,4 @@ void start_srt_thread(
 
 char * get_socket_stream_id(SRTSOCKET sock);
 
-int srt_send_chunked(SRTSOCKET sock, const char * buf, int len);
-
 #endif
