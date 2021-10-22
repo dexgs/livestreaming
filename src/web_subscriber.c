@@ -137,10 +137,14 @@ void * run_web_subscriber(void * _d) {
                 || max_subscribers_exceeded(map, name))
         {
             close(sock);
+            if (name != NULL) free(name);
             return NULL;
         }
 
         struct published_stream_data * data = get_stream_from_map(map, name);
+
+        free(name);
+
         if (data != NULL) {
             char * response = 
                 "HTTP/1.1 200 OK\r\n"
@@ -154,11 +158,10 @@ void * run_web_subscriber(void * _d) {
         } else {
             close(sock);
         }
-    } else if (path_len > 5 && strncmp("/api/", path, 5) == 0) {
-        free(addr);
-        // /api/ TODO: implement this later
-        close(sock);
     } else {
+        if (path_len > 5 && strncmp("/api/", path, 5) == 0) {
+            // /api/ TODO: implement this later
+        }
         free(addr);
         close(sock);
     }
