@@ -59,7 +59,7 @@ void * srt_publisher(void * _d) {
 
         struct srt_subscriber_node * srt_node = data->srt_subscribers;
         while (srt_node != NULL) {
-            send_err = srt_sendmsg(srt_node->sock, buf, bytes_read, 0, false, 0);
+            send_err = srt_sendmsg(srt_node->sock, buf, bytes_read, 0, false);
             struct srt_subscriber_node * next_node = srt_node->next;
 
             // If sending failed, remove the subscriber
