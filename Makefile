@@ -17,6 +17,10 @@ ShaRT: $(obj)
 	@mkdir -p bin
 	$(CXX) $(CFLAGS) -o bin/$@ $^ $(LDFLAGS)
 
+test: $(obj) test/test.o
+	@mkdir -p bin
+	$(CXX) $(CFLAGS) -o bin/$@ $^ $(LDFLAGS)
+
 SRT_CMAKE_ARGS = \
 	-DENABLE_STATIC:bool=1 -DENABLE_SHARED:bool=0 -DENABLE_LOGGING:bool=0 \
 	-DENABLE_APPS:bool=0 -DCMAKE_BUILD_TYPE=Release
@@ -39,5 +43,5 @@ picohttpparser:
 
 .PHONY: clean
 clean:
-	rm -f $(obj) bin/ShaRT
+	rm -f $(obj) bin
 	rm -rf $(THIRDPARTY_DIR)/srt/_build
