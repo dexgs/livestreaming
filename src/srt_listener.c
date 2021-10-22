@@ -60,16 +60,19 @@ void start_srt_listener(
     struct sockaddr_in addr = get_sockaddr_with_port(port);
 
     SRTSOCKET sock = srt_create_socket();
-    int bind_err = srt_bind(sock, (struct sockaddr *) &addr, sizeof(addr));
-    assert(bind_err != SRT_ERROR);
-
-    struct thread_data * d = malloc(sizeof(struct thread_data));
-    d->sock = sock;
-    d->auth = auth;
-    d->map = map;
-    d->is_publisher = is_publisher;
 
     int set_flag_err;
+
+    int min_fc = 32;
+    // Set minimum number of "in-flight packets"
+    set_flag_err = srt_setsockflag(sock, SRTO_FC, &min_fc, sizeof(min_fc));
+    assert(set_flag_err != SRT_ERROR);
+
+    int min_buf = 46592;
+    // Set minimum buffer sizes
+    set_flag_err = srt_setsockflag(sock, SRTO_SNDBUF, &min_buf, sizeof(min_buf));
+    assert(set_flag_err != SRT_ERROR);
+
     // Set latency to zero
     int z = 0;
     set_flag_err = srt_setsockflag(sock, SRTO_LATENCY, &z, sizeof(z));
@@ -88,6 +91,18 @@ void start_srt_listener(
     // Disable repeated loss detection reports
     set_flag_err = srt_setsockflag(sock, SRTO_NAKREPORT, &no, sizeof(no));
     assert(set_flag_err != SRT_ERROR);
+
+
+    set_flag_err = srt_setsockflag(sock, SRTO_RCVBUF, &min_buf, sizeof(min_buf));
+    assert(set_flag_err != SRT_ERROR);
+    int bind_err = srt_bind(sock, (struct sockaddr *) &addr, sizeof(addr));
+    assert(bind_err != SRT_ERROR);
+
+    struct thread_data * d = malloc(sizeof(struct thread_data));
+    d->sock = sock;
+    d->auth = auth;
+    d->map = map;
+    d->is_publisher = is_publisher;
 
     int pthread_err;
     pthread_t thread_handle;
