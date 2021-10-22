@@ -76,6 +76,16 @@ void start_srt_listener(
     set_flag_err = srt_setsockflag(sock, SRTO_RCVBUF, &min_buf, sizeof(min_buf));
     assert(set_flag_err != SRT_ERROR);
 
+    int overhead_percent = 10;
+    // Set overhead to max 10% of bw
+    set_flag_err = srt_setsockflag(sock, SRTO_OHEADBW, &overhead_percent, sizeof(overhead_percent));
+    assert(set_flag_err != SRT_ERROR);
+
+    struct linger l = {.l_onoff = 0, .l_linger = 0};
+    // Disable socket linger
+    set_flag_err = srt_setsockflag(sock, SRTO_LINGER, &l, sizeof(l));
+    assert(set_flag_err != SRT_ERROR);
+
     // Set latency to zero
     int z = 0;
     set_flag_err = srt_setsockflag(sock, SRTO_LATENCY, &z, sizeof(z));
