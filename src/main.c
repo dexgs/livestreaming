@@ -1,5 +1,3 @@
-#include <signal.h>
-#include <stdio.h>
 #include <limits.h>
 #include "config.h"
 #include "authenticator.h"
