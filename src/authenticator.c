@@ -107,8 +107,9 @@ char * authenticate(
 
     // If the command was started successfullly
     if (p != NULL) {
-        size_t inc = strlen(stream_name);
-        size_t output_stream_name_len = strlen(stream_name);
+        size_t inc = strlen(stream_name) + 1;
+        if (inc < 10) inc = 10;
+        size_t output_stream_name_len = inc;
         output_stream_name = malloc(output_stream_name_len);
 
         size_t chars_so_far = 0;
