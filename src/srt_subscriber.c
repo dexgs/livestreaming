@@ -33,11 +33,15 @@ void * srt_subscriber(void * _d) {
             || max_subscribers_exceeded(map, name))
     {
         srt_close(sock);
+        if (name != NULL) free(name);
         return NULL;
     }
 
 
     struct published_stream_data * data = get_stream_from_map(map, name);
+
+    free(name);
+
     if (data != NULL) {
         add_srt_subscriber(data, sock);
         int mutex_lock_err = pthread_mutex_unlock(&data->access_lock);
