@@ -17,6 +17,7 @@ struct thread_data {
     struct authenticator * auth;
     struct published_stream_map * map;
     bool is_publisher;
+    struct sockaddr_in addr;
 };
 
 
@@ -52,15 +53,9 @@ void start_srt_listeners(
     start_srt_listener(subscribe_port, auth, map, false, subscribe_passphrase);
 }
 
-void start_srt_listener(
-        unsigned short port, struct authenticator * auth,
-        struct published_stream_map * map, bool is_publisher,
-        const char * passphrase)
-{
-    struct sockaddr_in addr = get_sockaddr_with_port(port);
-
-    SRTSOCKET sock = srt_create_socket();
-
+// Set socket flags that are unchanging, i.e. the passphrase is not set in this
+// function because it depends on a parameter that is not known at compile time.
+void set_sock_flags(SRTSOCKET sock) {
     int set_flag_err;
 
     int min_fc = 1024;
@@ -100,10 +95,27 @@ void start_srt_listener(
     set_flag_err = srt_setsockflag(sock, SRTO_NAKREPORT, &no, sizeof(no));
     assert(set_flag_err != SRT_ERROR);
 
-    // Set passphrase for encryption
-    set_flag_err =
-        srt_setsockflag(sock, SRTO_PASSPHRASE, passphrase, strlen(passphrase));
+    // Disable drift tracer
+    set_flag_err = srt_setsockflag(sock, SRTO_DRIFTTRACER, &no, sizeof(no));
     assert(set_flag_err != SRT_ERROR);
+}
+
+
+void start_srt_listener(
+        unsigned short port, struct authenticator * auth,
+        struct published_stream_map * map, bool is_publisher,
+        const char * passphrase)
+{
+    struct sockaddr_in addr = get_sockaddr_with_port(port);
+
+    SRTSOCKET sock = srt_create_socket();
+
+    set_sock_flags(sock);
+
+    // Set passphrase for encryption
+    int set_passphrase_err =
+        srt_setsockflag(sock, SRTO_PASSPHRASE, passphrase, strlen(passphrase));
+    assert(set_passphrase_err != SRT_ERROR);
 
     int bind_err = srt_bind(sock, (struct sockaddr *) &addr, sizeof(addr));
     assert(bind_err != SRT_ERROR);
@@ -113,6 +125,7 @@ void start_srt_listener(
     d->auth = auth;
     d->map = map;
     d->is_publisher = is_publisher;
+    d->addr = addr;
 
     int pthread_err;
     pthread_t thread_handle;
@@ -126,7 +139,7 @@ void start_srt_listener(
 
 
 #ifndef SRT_LISTEN_BACKLOG
-#define SRT_LISTEN_BACKLOG 10
+#define SRT_LISTEN_BACKLOG 4
 #endif
 
 void * run_srt_listener(void * _d) {
@@ -135,14 +148,15 @@ void * run_srt_listener(void * _d) {
     struct authenticator * auth = d->auth;
     struct published_stream_map * map = d->map;
     bool is_publisher = d->is_publisher;
+    struct sockaddr_in client_addr = d->addr;
     free(d);
 
     int listen_err = srt_listen(sock, SRT_LISTEN_BACKLOG);
     assert(listen_err != SRT_ERROR);
 
+    int client_addr_len = sizeof(client_addr);
+
     while (true) {
-        struct sockaddr_storage client_addr;
-        int client_addr_len = sizeof(client_addr);
 
         SRTSOCKET client_sock =
             srt_accept(sock, (struct sockaddr *) &client_addr, &client_addr_len);

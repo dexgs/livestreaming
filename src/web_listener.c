@@ -19,6 +19,7 @@ struct thread_data {
     bool read_web_ip_from_headers;
     struct authenticator * auth;
     struct published_stream_map * map;
+    struct sockaddr_in addr;
 };
 
 void * run_web_listener(void * _d);
@@ -54,6 +55,7 @@ void start_web_listener(
     d->read_web_ip_from_headers = read_web_ip_from_headers;
     d->auth = auth;
     d->map = map;
+    d->addr = addr;
 
     pthread_t thread_handle;
     int pthread_err;
@@ -71,12 +73,12 @@ void * run_web_listener(void * _d) {
     bool read_web_ip_from_headers = d->read_web_ip_from_headers;
     struct authenticator * auth = d->auth;
     struct published_stream_map * map = d->map;
+    struct sockaddr_in client_addr = d->addr;
     free(d);
 
-    while (true) {
-        struct sockaddr_in client_addr;
-        unsigned int client_addr_len;
+    unsigned int client_addr_len = sizeof(client_addr);
 
+    while (true) {
         int client_sock = accept(
                 sock, (struct sockaddr *) &client_addr, &client_addr_len);
         if (client_sock == -1) continue;

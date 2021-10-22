@@ -15,12 +15,6 @@ void start_srt_thread(
     d->auth = auth;
     d->map = map;
 
-    // Disable drift tracer
-    int set_flag_err;
-    bool no = false;
-    set_flag_err = srt_setsockflag(sock, SRTO_DRIFTTRACER, &no, sizeof(no));
-    assert(set_flag_err != SRT_ERROR);
-
     int pthread_err;
     pthread_t thread_handle;
 
