@@ -63,6 +63,7 @@ void start_srt_listener(
 
     int set_flag_err;
 
+    /*
     int min_fc = 128;
     // Set minimum number of "in-flight packets"
     set_flag_err = srt_setsockflag(sock, SRTO_FC, &min_fc, sizeof(min_fc));
@@ -78,11 +79,6 @@ void start_srt_listener(
     set_flag_err = srt_setsockflag(sock, SRTO_LATENCY, &z, sizeof(z));
     assert(set_flag_err != SRT_ERROR);
 
-    // Set passphrase for encryption
-    set_flag_err =
-        srt_setsockflag(sock, SRTO_PASSPHRASE, passphrase, strlen(passphrase));
-    assert(set_flag_err != SRT_ERROR);
-
     bool no = false;
     // Disable timestamps
     set_flag_err = srt_setsockflag(sock, SRTO_TSBPDMODE, &no, sizeof(no));
@@ -92,9 +88,15 @@ void start_srt_listener(
     set_flag_err = srt_setsockflag(sock, SRTO_NAKREPORT, &no, sizeof(no));
     assert(set_flag_err != SRT_ERROR);
 
-
     set_flag_err = srt_setsockflag(sock, SRTO_RCVBUF, &min_buf, sizeof(min_buf));
     assert(set_flag_err != SRT_ERROR);
+    */
+
+    // Set passphrase for encryption
+    set_flag_err =
+        srt_setsockflag(sock, SRTO_PASSPHRASE, passphrase, strlen(passphrase));
+    assert(set_flag_err != SRT_ERROR);
+
     int bind_err = srt_bind(sock, (struct sockaddr *) &addr, sizeof(addr));
     assert(bind_err != SRT_ERROR);
 
