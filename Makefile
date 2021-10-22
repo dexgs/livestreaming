@@ -17,7 +17,7 @@ ShaRT: $(obj)
 	@mkdir -p bin
 	$(CXX) $(CFLAGS) -o bin/$@ $^ $(LDFLAGS)
 
-test: $(obj) test/test.o
+test: $(filter-out src/main.o, $(obj)) test/test.o
 	@mkdir -p bin
 	$(CXX) $(CFLAGS) -o bin/$@ $^ $(LDFLAGS)
 
