@@ -87,7 +87,7 @@ void set_sock_flags(SRTSOCKET sock) {
     assert(set_flag_err != SRT_ERROR);
 
     bool no = false;
-    // Disable timestamps
+    // Disable timestamps (this means SRT spawn one less thread per connection)
     set_flag_err = srt_setsockflag(sock, SRTO_TSBPDMODE, &no, sizeof(no));
     assert(set_flag_err != SRT_ERROR);
 
