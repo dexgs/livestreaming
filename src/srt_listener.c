@@ -70,12 +70,10 @@ void start_srt_listener(
     d->is_publisher = is_publisher;
 
     int set_flag_err;
-    /*
     // Set latency to zero
     int z = 0;
     set_flag_err = srt_setsockflag(sock, SRTO_LATENCY, &z, sizeof(z));
     assert(set_flag_err != SRT_ERROR);
-    */
 
     // Set passphrase for encryption
     set_flag_err =
@@ -83,7 +81,6 @@ void start_srt_listener(
     assert(set_flag_err != SRT_ERROR);
 
     bool no = false;
-    /*
     // Disable timestamps
     set_flag_err = srt_setsockflag(sock, SRTO_TSBPDMODE, &no, sizeof(no));
     assert(set_flag_err != SRT_ERROR);
@@ -91,7 +88,6 @@ void start_srt_listener(
     // Disable repeated loss detection reports
     set_flag_err = srt_setsockflag(sock, SRTO_NAKREPORT, &no, sizeof(no));
     assert(set_flag_err != SRT_ERROR);
-    */
 
     int pthread_err;
     pthread_t thread_handle;
