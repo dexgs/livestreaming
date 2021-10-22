@@ -63,15 +63,17 @@ void start_srt_listener(
 
     int set_flag_err;
 
-    /*
-    int min_fc = 128;
+    int min_fc = 1024;
     // Set minimum number of "in-flight packets"
     set_flag_err = srt_setsockflag(sock, SRTO_FC, &min_fc, sizeof(min_fc));
     assert(set_flag_err != SRT_ERROR);
 
-    int min_buf = 186368;
+    int min_buf = 1490944;
     // Set minimum buffer sizes
     set_flag_err = srt_setsockflag(sock, SRTO_SNDBUF, &min_buf, sizeof(min_buf));
+    assert(set_flag_err != SRT_ERROR);
+
+    set_flag_err = srt_setsockflag(sock, SRTO_RCVBUF, &min_buf, sizeof(min_buf));
     assert(set_flag_err != SRT_ERROR);
 
     // Set latency to zero
@@ -87,10 +89,6 @@ void start_srt_listener(
     // Disable repeated loss detection reports
     set_flag_err = srt_setsockflag(sock, SRTO_NAKREPORT, &no, sizeof(no));
     assert(set_flag_err != SRT_ERROR);
-
-    set_flag_err = srt_setsockflag(sock, SRTO_RCVBUF, &min_buf, sizeof(min_buf));
-    assert(set_flag_err != SRT_ERROR);
-    */
 
     // Set passphrase for encryption
     set_flag_err =
