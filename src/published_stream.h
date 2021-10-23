@@ -86,6 +86,7 @@ bool stream_name_in_map(struct published_stream_map * map, const char * name);
 // because the size of the array may go out of sync with the contents of the map.
 char ** stream_names(struct published_stream_map * map, int * num_streams);
 
+// `name` should be heap allocated, as `remove_stream_from_map` will free it
 struct published_stream_data * add_stream_to_map(
         struct published_stream_map * map, SRTSOCKET sock, char * name);
 
