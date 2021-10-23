@@ -20,29 +20,12 @@ void * srt_publisher(void * _d) {
 
     char * name = get_socket_stream_id(sock);
 
-    char * processed_name = authenticate(auth, true, addr, name);
-    free(name);
-    name = processed_name;
-
-    // Close the connection prematurely if...
-    if (
-            // If authentication failed
-            name == NULL
-            // If no more publishers are allowed
-            || max_publishers_exceeded(map)
-            // If another stream is already using the chosen name
-            || stream_name_in_map(map, name)) 
-    {
-        goto close;
-    }
+    // Add the stream and acquire the created stream data
+    struct published_stream_data * data =
+        add_stream_to_map(map, auth, &name, addr, sock);
+    if (data == NULL) return NULL;
 
     printf("`%s` started publishing `%s`\n", addr, name);
-
-    // Add the stream and acquire the created stream data
-    struct published_stream_data * data = add_stream_to_map(map, sock, name);
-    if (data == NULL) {
-        goto close;
-    }
 
     char buf[SRT_BUFFER_SIZE];
     int mutex_lock_err;
@@ -107,12 +90,5 @@ void * srt_publisher(void * _d) {
 
     remove_stream_from_map(map, data);
 
-    return NULL;
-
-close:
-    if (name != NULL) free(name);
-    if (addr != NULL) free(addr);
-    if (data != NULL) free(data);
-    srt_close(sock);
     return NULL;
 }

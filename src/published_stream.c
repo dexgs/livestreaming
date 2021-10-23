@@ -308,7 +308,7 @@ char ** stream_names(struct published_stream_map * map, int * num_streams) {
 }
 
 
-struct published_stream_data * add_stream_to_map(
+struct published_stream_data * create_stream_data_in_map(
         struct published_stream_map * map, SRTSOCKET sock, char * name)
 {
     int mutex_lock_err;
@@ -318,7 +318,13 @@ struct published_stream_data * add_stream_to_map(
 
     struct published_stream_data * data;
 
-    if (get_node_with_name(map, name) == NULL) {
+    bool max_publishers_exceeded =
+        map->max_publishers > 0 && map->num_publishers >= map->max_publishers;
+    bool stream_name_in_map = get_node_with_name(map, name) != NULL;
+
+    if (max_publishers_exceeded || stream_name_in_map) {
+        data = NULL;
+    } else {
         data = create_published_stream_data(sock, name);
 
         int index = hash(name) % MAP_SIZE;
@@ -334,13 +340,36 @@ struct published_stream_data * add_stream_to_map(
         map->buckets[index] = new_node;
 
         map->num_publishers++;
-
-    } else {
-        data = NULL;
     }
 
     mutex_lock_err = pthread_mutex_unlock(&map->map_lock);
     assert(mutex_lock_err == 0);
+
+    return data;
+}
+
+
+struct published_stream_data * add_stream_to_map(
+        struct published_stream_map * map, struct authenticator * auth,
+        char ** name, char * addr, SRTSOCKET sock)
+{
+    char * processed_name = authenticate(auth, true, addr, *name);
+    free(*name);
+    *name = processed_name;
+
+    // If authentication failed
+    if (*name == NULL) {
+        srt_close(sock);
+        return NULL;
+    }
+
+    struct published_stream_data * data =
+        create_stream_data_in_map(map, sock, *name);
+    if (data == NULL) {
+        free(*name);
+        free(addr);
+        srt_close(sock);
+    }
 
     return data;
 }

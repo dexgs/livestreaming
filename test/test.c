@@ -17,6 +17,10 @@
  * properly. The tests do not cover the behaviour of third-party code like SRT
  * or PicoHTTPParser, as their correctness is not my responsibility */
 
+// Prototype for interal function from published_stream.c that gets tested
+struct published_stream_data * create_stream_data_in_map(
+        struct published_stream_map * map, SRTSOCKET sock, char * name);
+
 
 // AUTHENTICATOR TESTS
 
@@ -164,7 +168,7 @@ void * add_stream_to_map_thread(void * _d) {
     free(d);
 
     // We're not actually doing any I/O, so just use a dummy file descriptior
-    add_stream_to_map(map, -1, name);
+    create_stream_data_in_map(map, -1, name);
 
     return NULL;
 }
@@ -221,7 +225,7 @@ void test_published_streams() {
         // Assert that the stream map does not allow duplicate stream names
         for(int i = 0; i < NUM_TEST_THREADS; i++) {
             struct published_stream_data * data =
-                add_stream_to_map(map, -1, stream_names[i]);
+                create_stream_data_in_map(map, -1, stream_names[i]);
             assert(data == NULL);
         }
 
@@ -316,7 +320,7 @@ void * add_remove_stream_thread(void * _d) {
     char * name = d->name;
 
     for (int i = 0; i < NUM_TEST_RUNS; i++) {
-        struct published_stream_data * data = add_stream_to_map(map, -1, strdup(name));
+        struct published_stream_data * data = create_stream_data_in_map(map, -1, strdup(name));
         assert(data != NULL);
 
         // usleep(10);
