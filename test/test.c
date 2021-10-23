@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <assert.h>
 #include <pthread.h>
 #include <stdbool.h>
@@ -170,14 +171,14 @@ void * add_stream_to_map_thread(void * _d) {
 
 void * add_srt_subscriber_to_stream_thread(void * _data) {
     struct published_stream_data * data = (struct published_stream_data *) _data;
-    add_srt_subscriber(data, -1);
+    add_srt_subscriber_to_stream(data, -1);
 
     return NULL;
 }
 
 void * add_web_subscriber_to_stream_thread(void * _data) {
     struct published_stream_data * data = (struct published_stream_data *) _data;
-    add_web_subscriber(data, -1);
+    add_web_subscriber_to_stream(data, -1);
 
     return NULL;
 }
@@ -273,12 +274,10 @@ void test_published_streams() {
             assert(get_num_subscribers(streams[i]) == 0);
         }
 
-        // CLEAN UP
-
         // Clean up published_stream_data
         for (int i = 0; i < NUM_TEST_THREADS; i++) {
             struct published_stream_data * data = streams[i];
-            remove_stream_from_map(map, stream_names[i]);
+            remove_name_from_map(map, stream_names[i]);
             pthread_mutex_unlock(&data->access_lock);
             // Clean up mutexes and free
             pthread_mutex_destroy(&data->num_subscribers_lock);
@@ -303,6 +302,83 @@ void test_published_streams() {
 }
 
 
+// CONCURRENCY TEST
+
+struct concurrency_thread_data {
+    char * name;
+    struct published_stream_map * map;
+    struct authenticator * auth;
+};
+
+void * add_remove_stream_thread(void * _d) {
+    struct concurrency_thread_data * d = (struct concurrency_thread_data *) _d;
+    struct published_stream_map * map = d->map;
+    char * name = d->name;
+
+    for (int i = 0; i < NUM_TEST_RUNS; i++) {
+        struct published_stream_data * data = add_stream_to_map(map, -1, strdup(name));
+        assert(data != NULL);
+
+        // usleep(10);
+
+        remove_stream_from_map(map, data);
+    }
+
+    return NULL;
+}
+
+void * add_subscriber_thread(void * _d) {
+    struct concurrency_thread_data * d = (struct concurrency_thread_data *) _d;
+    char * name = d->name;
+    char * addr = "127.0.0.1:1234";
+    struct published_stream_map * map = d->map;
+    struct authenticator * auth = d->auth;
+
+    for (int i = 0; i < NUM_TEST_RUNS; i++) {
+        if (i % 2 == 0) {
+            add_web_subscriber(map, auth, strdup(name), strdup(addr), -1);
+        } else {
+            add_srt_subscriber(map, auth, strdup(name), strdup(addr), -1);
+        }
+    }
+
+    return NULL;
+}
+
+// Test doing the following at the same time:
+// 1. Adding and removing a published stream with the given name
+// 2. Adding SRT and web subscribers to a published stream with the given name
+// If implementation is correct, no errors should arise from trying to add a
+// subscriber while a stream is ending
+void test_concurrency() {
+    for (int i = 0; i < NUM_TEST_RUNS; i++) {
+        struct published_stream_map * map = create_published_stream_map(0, 0);
+        struct authenticator * auth = create_authenticator("exit 0", 0);
+
+        struct concurrency_thread_data * d =
+            malloc(sizeof(struct concurrency_thread_data));
+
+        // This name is irrelevant.
+        d->name = "phooey";
+        d->map = map;
+        d->auth = auth;
+
+        pthread_t handle_1;
+        pthread_t handle_2;
+
+        pthread_create(&handle_1, NULL, add_remove_stream_thread, d);
+        pthread_create(&handle_2, NULL, add_subscriber_thread, d);
+
+        pthread_join(handle_1, NULL);
+        pthread_join(handle_2, NULL);
+
+        free(map);
+        free(auth);
+        free(d);
+    }
+}
+
+
 // MAIN
 
 int main() {
@@ -313,4 +389,7 @@ int main() {
 
     printf("Testing published streams\n");
     test_published_streams();
+
+    printf("Testing adding/removing streams + adding subscribers concurrently\n");
+    test_concurrency();
 }
