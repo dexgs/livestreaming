@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <sys/time.h>
 #include <signal.h>
 #include <stdbool.h>
 #include "published_stream.h"
@@ -38,9 +39,16 @@ void start_web_listener(
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
 
+    int set_sock_opt_err;
+
     int yes = 1;
-    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
-    setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &yes, sizeof(yes));
+    set_sock_opt_err =
+        setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+    assert(set_sock_opt_err == 0);
+
+    set_sock_opt_err = 
+        setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &yes, sizeof(yes));
+    assert(set_sock_opt_err == 0);
 
     int bind_err = bind(sock, (struct sockaddr *) &addr, sizeof(addr));
     assert(bind_err == 0);
@@ -78,10 +86,22 @@ void * run_web_listener(void * _d) {
 
     unsigned int client_addr_len = sizeof(client_addr);
 
+
+    struct timeval timeout = { .tv_sec = 0, .tv_usec = 500000 };
+
     while (true) {
         int client_sock = accept(
                 sock, (struct sockaddr *) &client_addr, &client_addr_len);
         if (client_sock == -1) continue;
+
+        int set_sock_opt_err;
+        set_sock_opt_err = setsockopt(
+                client_sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
+        assert(set_sock_opt_err == 0);
+
+        set_sock_opt_err = setsockopt(
+                client_sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+        assert(set_sock_opt_err == 0);
 
         if (max_pending_connections_exceeded(auth)) {
             close(client_sock);
