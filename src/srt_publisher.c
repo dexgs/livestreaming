@@ -102,53 +102,10 @@ void * srt_publisher(void * _d) {
         bytes_read = srt_recv(sock, buf, SRT_BUFFER_SIZE);
     }
 
-    srt_close(sock);
     printf("`%s` stopped publishing `%s`\n", addr, name);
-
-    remove_stream_from_map(map, name);
-    mutex_lock_err = pthread_mutex_unlock(&data->access_lock);
-    assert(mutex_lock_err == 0);
-
-    free(name);
     free(addr);
 
-    // Clean up SRT subscribers
-    mutex_lock_err = pthread_mutex_lock(&data->srt_subscribers_lock);
-    assert(mutex_lock_err == 0);
-
-    struct srt_subscriber_node * srt_node = data->srt_subscribers;
-    while (srt_node != NULL) {
-        srt_close(srt_node->sock);
-        struct srt_subscriber_node * next_node = srt_node->next;
-        free(srt_node);
-        srt_node = next_node;
-    }
-
-    mutex_lock_err = pthread_mutex_unlock(&data->srt_subscribers_lock);
-    assert(mutex_lock_err == 0);
-
-    // Clean up Web subscribers
-    mutex_lock_err = pthread_mutex_lock(&data->web_subscribers_lock);
-    assert(mutex_lock_err == 0);
-
-    struct web_subscriber_node * web_node = data->web_subscribers;
-    while (web_node != NULL) {
-        write(web_node->sock, "0\r\n\r\n", 5);
-        close(web_node->sock);
-        struct web_subscriber_node * next_node = web_node->next;
-        free(web_node);
-        web_node = next_node;
-    }
-
-    mutex_lock_err = pthread_mutex_unlock(&data->web_subscribers_lock);
-    assert(mutex_lock_err == 0);
-
-    // Free the published_stream_data
-    pthread_mutex_destroy(&data->num_subscribers_lock);
-    pthread_mutex_destroy(&data->srt_subscribers_lock);
-    pthread_mutex_destroy(&data->web_subscribers_lock);
-    pthread_mutex_destroy(&data->access_lock);
-    free(data);
+    remove_stream_from_map(map, data);
 
     return NULL;
 
