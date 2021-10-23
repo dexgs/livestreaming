@@ -12,11 +12,13 @@
 // broadcast (along with the locks required for safe use across threads).
 struct published_stream_data {
     SRTSOCKET sock;
-    const char * name;
+    char * name;
 
     pthread_mutex_t num_subscribers_lock;
     unsigned int num_subscribers;
 
+    // Individual locks for SRT and web subscribers so that adding an SRT
+    // subscriber doesn't block sending to web subscribers and vice versa
     pthread_mutex_t srt_subscribers_lock;
     struct srt_subscriber_node * srt_subscribers;
 
@@ -26,11 +28,11 @@ struct published_stream_data {
     // `access_lock` is meant to allow things to be done with the
     // `published_stream_data` struct after getting/removing it from the
     // `published_stream_map` with the guarantee that the data will not be
-    // accessed in=between when the `publishe_stream_data` was gotten/removed
+    // accessed in-between when the `publishe_stream_data` was gotten/removed
     // from the `published_stream_map` and when the `published_stream_data` is
-    // used. It is locked by the `remove_stream_from_map` and `get_stream_from_map`
-    // functions and it is to be unlocked by the caller after the operations that
-    // need to be protected are done.
+    // used. It is locked by the `remove_stream_from_map` and
+    // `get_stream_from_map` functions and it is to be unlocked by the caller
+    // after the operations that need to be protected are done.
     pthread_mutex_t access_lock;
 };
 
@@ -85,13 +87,10 @@ bool stream_name_in_map(struct published_stream_map * map, const char * name);
 char ** stream_names(struct published_stream_map * map, int * num_streams);
 
 struct published_stream_data * add_stream_to_map(
-        struct published_stream_map * map, SRTSOCKET sock, const char * name);
+        struct published_stream_map * map, SRTSOCKET sock, char * name);
 
-// This function does not free the `published_stream_data` with the given name.
-// This function locks the `access_lock` member of the `published_stream_data`
-// with the given name (if it exists). It must be properly unlocked by the caller.
 void remove_stream_from_map(
-        struct published_stream_map * map, const char * name);
+        struct published_stream_map * map, struct published_stream_data * data);
 
 // This function locks the `access_lock` member of the returned data. It must be
 // properly unlocked by the caller.
