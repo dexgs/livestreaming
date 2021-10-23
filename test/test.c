@@ -11,9 +11,11 @@
 // How many times each test will run
 #define NUM_TEST_RUNS 10
 
+
 /* These tests are intended to make sure the code I have written is behaving
  * properly. The tests do not cover the behaviour of third-party code like SRT
  * or PicoHTTPParser, as their correctness is not my responsibility */
+
 
 // AUTHENTICATOR TESTS
 
@@ -109,7 +111,7 @@ void test_authenticator_thread_driver(
 }
 
 void test_authenticator() {
-    for (int i = 0; i < NUM_TEST_RUNS; i ++) {
+    for (int i = 0; i < NUM_TEST_RUNS; i++) {
         // Test authenticator which always accepts and sets names to "test_name"
         struct authenticator * constant_name_auth =
             create_authenticator("echo -n test_name; exit 0", 0);
@@ -146,6 +148,161 @@ void test_authenticator() {
 }
 
 
+// PUBLISHED STREAM TESTS
+
+struct published_stream_thread_data {
+    struct published_stream_map * map;
+    const char * name;
+};
+
+void * add_stream_to_map_thread(void * _d) {
+    struct published_stream_thread_data * d =
+        (struct published_stream_thread_data *) _d;
+    struct published_stream_map * map = d->map;
+    const char * name = d->name;
+    free(d);
+
+    // We're not actually doing any I/O, so just use a dummy file descriptior
+    add_stream_to_map(map, -1, name);
+
+    return NULL;
+}
+
+void * add_srt_subscriber_to_stream_thread(void * _data) {
+    struct published_stream_data * data = (struct published_stream_data *) _data;
+    add_srt_subscriber(data, -1);
+
+    return NULL;
+}
+
+void * add_web_subscriber_to_stream_thread(void * _data) {
+    struct published_stream_data * data = (struct published_stream_data *) _data;
+    add_web_subscriber(data, -1);
+
+    return NULL;
+}
+
+void test_published_streams() {
+    for (int i = 0; i < NUM_TEST_RUNS; i++) {
+        // Make stream names from garbage data
+        char ** stream_names = malloc(sizeof(void *) * NUM_TEST_THREADS);
+        for (int i = 0; i < NUM_TEST_THREADS; i++) {
+            char * stream_name = malloc(20);
+            stream_name[19] = '\0';
+            sprintf(stream_name, "%d", i);
+            stream_names[i] = stream_name;
+        }
+
+        struct published_stream_map * map =
+            create_published_stream_map(NUM_TEST_THREADS, NUM_TEST_THREADS);
+
+        int pthread_err;
+
+        // Add NUM_TEST_THREADS streams to the map concurrently
+        pthread_t handles[NUM_TEST_THREADS];
+        for (int i = 0; i < NUM_TEST_THREADS; i++) {
+            struct published_stream_thread_data * d =
+                malloc(sizeof(struct published_stream_thread_data));
+            d->map = map;
+            d->name = stream_names[i];
+            pthread_err =
+                pthread_create(&handles[i], NULL, add_stream_to_map_thread, d);
+            assert(pthread_err == 0);
+        }
+        for (int i = 0; i < NUM_TEST_THREADS; i++) {
+            pthread_err = pthread_join(handles[i], NULL);
+        }
+
+        // Assert everything was properly added to the map.
+        // Recall that the capacity of the map was set to NUM_TEST_THREADS
+        assert(max_publishers_exceeded(map));
+
+        // Assert that the stream map does not allow duplicate stream names
+        for(int i = 0; i < NUM_TEST_THREADS; i++) {
+            struct published_stream_data * data =
+                add_stream_to_map(map, -1, stream_names[i]);
+            assert(data == NULL);
+        }
+
+        // Get a list of all the stream data
+        struct published_stream_data ** streams =
+            malloc(sizeof(void *) * NUM_TEST_THREADS);
+        for (int i = 0; i < NUM_TEST_THREADS; i++) {
+            struct published_stream_data * data =
+                get_stream_from_map(map, stream_names[i]);
+            assert(data != NULL);
+            pthread_mutex_unlock(&data->access_lock);
+            streams[i] = data;
+        }
+
+        for (int i = 0; i < NUM_TEST_THREADS; i++) {
+            for (int j = 0; j < NUM_TEST_THREADS; j++) {
+                if (j % 2 == 0) {
+                    pthread_err = pthread_create(
+                            &handles[j], NULL,
+                            add_srt_subscriber_to_stream_thread, streams[i]);
+                } else {
+                    pthread_err = pthread_create(
+                            &handles[j], NULL,
+                            add_web_subscriber_to_stream_thread, streams[i]);
+                }
+                assert(pthread_err == 0);
+            }
+            for(int j = 0; j < NUM_TEST_THREADS; j++) {
+                pthread_err = pthread_join(handles[j], NULL);
+                assert(pthread_err == 0);
+            }
+            assert(max_subscribers_exceeded(map, streams[i]));
+
+            struct srt_subscriber_node * srt_node = streams[i]->srt_subscribers;
+            while (srt_node != NULL) {
+                struct srt_subscriber_node * next_node = srt_node->next;
+                free(srt_node);
+                srt_node = next_node;
+                increment_num_subscribers(streams[i], -1);
+            }
+
+            struct web_subscriber_node * web_node = streams[i]->web_subscribers;
+            while (web_node != NULL) {
+                struct web_subscriber_node * next_node = web_node->next;
+                free(web_node);
+                web_node = next_node;
+                increment_num_subscribers(streams[i], -1);
+            }
+
+            assert(get_num_subscribers(streams[i]) == 0);
+        }
+
+        // CLEAN UP
+
+        // Clean up published_stream_data
+        for (int i = 0; i < NUM_TEST_THREADS; i++) {
+            struct published_stream_data * data = streams[i];
+            remove_stream_from_map(map, stream_names[i]);
+            pthread_mutex_unlock(&data->access_lock);
+            // Clean up mutexes and free
+            pthread_mutex_destroy(&data->num_subscribers_lock);
+            pthread_mutex_destroy(&data->srt_subscribers_lock);
+            pthread_mutex_destroy(&data->web_subscribers_lock);
+            pthread_mutex_destroy(&data->access_lock);
+            free(data);
+        }
+
+        // Assert everything was properly removed from the map
+        assert(!max_publishers_exceeded(map));
+
+        // Clean up names
+        for (int i = 0; i < NUM_TEST_THREADS; i++) {
+            free(stream_names[i]);
+        }
+        free(stream_names);
+
+        free(streams);
+        free(map);
+    }
+}
+
+
 // MAIN
 
 int main() {
@@ -153,4 +310,7 @@ int main() {
 
     printf("Testing authenticator\n");
     test_authenticator();
+
+    printf("Testing published streams\n");
+    test_published_streams();
 }
