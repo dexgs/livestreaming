@@ -4,10 +4,12 @@
 #include <stdbool.h>
 #include "authenticator.h"
 #include "published_stream.h"
+#include "web_api.h"
 
 void web_subscriber(
         int sock, bool read_web_ip_from_headers, char * addr,
-        struct authenticator * auth, struct published_stream_map * map);
+        struct authenticator * auth, struct published_stream_map * map,
+        struct web_api_data * data);
 
 int write_to_web_subscriber(
                 int sock, char * hex, unsigned int hex_len,
