@@ -6,6 +6,10 @@
 #include "authenticator.h"
 #include "srt/srt.h"
 
+#ifndef UNLISTED_STREAM_NAME_PREFIX
+#define UNLISTED_STREAM_NAME_PREFIX "_"
+#endif
+
 // Represents the data related to a single livestream.
 // It encapsulates the socket over which incoming data is received
 // as well as access to the connections over which the stream is
@@ -32,11 +36,14 @@ struct published_stream_data {
     // from the `published_stream_map` and when the `published_stream_data` is
     // used. It is locked by the `remove_stream_from_map` and
     // `get_stream_from_map` functions and it is to be unlocked by the caller
-    // after the operations that need to be protected are done.
+    // after the operations that need to be protected are done. This means
+    // we can protect a singe `published_stream_data` without locking the
+    // whole `published_stream_map`
     pthread_mutex_t access_lock;
 };
 
-// called from outside the thread for a stream
+// Called from outside the thread for a stream.
+// Locks/unlocks `num_subscribers_lock` on its own.
 unsigned int get_num_subscribers(struct published_stream_data * data);
 
 // called from inside the thread for a stream if sending data failed
@@ -84,7 +91,8 @@ bool stream_name_in_map(struct published_stream_map * map, const char * name);
 // shared between the returned strings and the contents of the map. Because of
 // this, num_streams *must* be used as the length for iterating over the names
 // because the size of the array may go out of sync with the contents of the map.
-char ** stream_names(struct published_stream_map * map, int * num_streams);
+char ** stream_names(
+        struct published_stream_map * map, unsigned int num_streams);
 
 // `*name` and `addr` should be heap allocated.
 struct published_stream_data * add_stream_to_map(
@@ -102,14 +110,14 @@ struct published_stream_data * get_stream_from_map(
 bool max_subscribers_exceeded(
         struct published_stream_map * map, struct published_stream_data * data);
 
-// called from outside the thread for a stream. frees name and addr, which must
-// be heap-allocated.
+// called from outside the thread for a stream. frees `name` and `addr`, which
+// must be heap-allocated.
 void add_web_subscriber(
         struct published_stream_map * map, struct authenticator * auth,
         char * name, char * addr, int sock);
 
-// called from outside the thread for a stream. frees name and addr, which must
-// be heap-allocated.
+// called from outside the thread for a stream. frees `name` and `addr`, which
+// must be heap-allocated.
 void add_srt_subscriber(
         struct published_stream_map * map, struct authenticator * auth,
         char * name, char * addr, SRTSOCKET sock);

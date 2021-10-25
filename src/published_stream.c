@@ -275,34 +275,130 @@ bool stream_name_in_map(struct published_stream_map * map, const char * name) {
 }
 
 
-char ** stream_names(struct published_stream_map * map, int * num_streams) {
+struct stream_info {
+    char * name;
+    unsigned int num_subscribers;
+};
+
+unsigned int partition_stream_info(
+        struct stream_info ** streams, unsigned int len, unsigned int pivot)
+{
+    struct stream_info * pivot_info = streams[pivot];
+    unsigned int l = 0;
+    unsigned int h = len - 1;
+
+    while (true) {
+        while (streams[l]->num_subscribers < pivot_info->num_subscribers) {
+            l++;
+        }
+        while (streams[h]->num_subscribers > pivot_info->num_subscribers) {
+            h--;
+        }
+        if (l >= h) {
+            return l;
+        }
+        // swap
+        struct stream_info * temp = streams[l];
+        streams[l] = streams[h];
+        streams[h] = temp;
+    }
+}
+
+void sort_stream_info(
+        struct stream_info ** streams, unsigned int len)
+{
+    if (len >= 2) {
+        unsigned int pivot = len / 2;
+        pivot = partition_stream_info(streams, len, pivot);
+        sort_stream_info(streams, pivot);
+        sort_stream_info(streams + pivot, len - pivot);
+    }
+}
+
+char ** stream_names(struct published_stream_map * map, unsigned int num_streams) {
     int mutex_lock_err;
 
     mutex_lock_err = pthread_mutex_lock(&map->map_lock);
     assert(mutex_lock_err == 0);
 
-    char ** stream_names = malloc(sizeof(char *) * map->num_publishers);
-    *num_streams = map->num_publishers;
-
-    unsigned int stream_names_index = 0;
-
-    for (int i = 0; i < MAP_SIZE; i++) {
-        struct published_stream_node * node = map->buckets[i];
-
-        while (node != NULL) {
-            char * name = malloc(strlen(node->data->name));
-            name = strcpy(name, node->data->name);
-
-            assert(stream_names_index < map->num_publishers);
-            stream_names[stream_names_index] = name;
-            stream_names_index++;
-
-            node = node->next;
-        }
-    }
+    unsigned int streams_len = map->num_publishers;
 
     mutex_lock_err = pthread_mutex_unlock(&map->map_lock);
     assert(mutex_lock_err == 0);
+
+    if (streams_len == 0) return NULL;
+
+    struct stream_info ** streams =
+        malloc(sizeof(struct stream_info *) * streams_len);
+
+    unsigned int streams_index = 0;
+
+    for (int i = 0; i < MAP_SIZE; i++) {
+        mutex_lock_err = pthread_mutex_lock(&map->map_lock);
+        assert(mutex_lock_err == 0);
+
+        struct published_stream_node * node = map->buckets[i];
+
+        while (node != NULL) {
+            // If stream is not unlisted
+            if (!(
+                        strlen(node->data->name) >= strlen(UNLISTED_STREAM_NAME_PREFIX)
+                        && strncmp(
+                            UNLISTED_STREAM_NAME_PREFIX, node->data->name,
+                            strlen(UNLISTED_STREAM_NAME_PREFIX)) == 0))
+            {
+                struct stream_info * info = malloc(sizeof(struct stream_info));
+
+                info->name = strdup(node->data->name);
+
+                mutex_lock_err =
+                    pthread_mutex_lock(&node->data->num_subscribers_lock);
+                assert (mutex_lock_err == 0);
+
+                info->num_subscribers = node->data->num_subscribers;
+
+                mutex_lock_err =
+                    pthread_mutex_unlock(&node->data->num_subscribers_lock);
+                assert (mutex_lock_err == 0);
+
+                if (streams_index >= streams_len) {
+                    streams_len *= 2;
+                    streams =
+                        realloc(streams, sizeof(struct stream_info *) * streams_len);
+                }
+
+                streams[streams_index] = info;
+                streams_index++;
+            }
+            node = node->next;
+        }
+
+        mutex_lock_err = pthread_mutex_unlock(&map->map_lock);
+        assert(mutex_lock_err == 0);
+    }
+
+    streams = realloc(streams, sizeof(struct stream_info *) * streams_index);
+
+    // Sort stream info by number of subscribers (quicksort)
+    sort_stream_info(streams, streams_index);
+
+    // `num_streams` cannot exceed the number of available streams
+    if (num_streams > streams_index || num_streams == 0) {
+        num_streams = streams_index;
+    }
+
+    // free excess streams
+    for (unsigned int i = num_streams; i < streams_index; i++) {
+        free(streams[i]->name);
+        free(streams[i]);
+    }
+
+    char ** stream_names = malloc(sizeof(char *) * num_streams);
+    for(unsigned int i = 0; i < num_streams; i++) {
+        stream_names[i] = streams[i]->name;
+        free(streams[i]);
+    }
+    free(streams);
 
     return stream_names;
 }
