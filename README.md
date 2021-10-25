@@ -1,7 +1,8 @@
 # :poop: ShaRT
 
 ShaRT is a live-streaming server which ingests over SRT and broadcasts over
-SRT and HTTP. It is the suck-ccessor to [diarrhea](https://git.extremelycorporate.ca/chili-b/diarrhea)
+SRT and HTTP licensed under the GPLv3.
+It is the suck-ccessor to [diarrhea](https://git.extremelycorporate.ca/chili-b/diarrhea)
 
 ## Dependencies
 
@@ -16,7 +17,7 @@ Clone the repository
 (pass `--recurse-submodules` or run 
 `git submodule update --init --recursive` in the project directory after cloning)
 and run `make all` in its directory. Make sure you have `cmake` installed
-(required to build SRT).
+(required to build SRT). An executable will be output at `bin/ShaRT`.
 
 ## Usage
 
