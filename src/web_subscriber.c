@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <assert.h>
 #include "web_subscriber.h"
+#include "web_api.h"
 #include "authenticator.h"
 #include "published_stream.h"
 #include "picohttpparser/picohttpparser.h"
@@ -15,13 +16,15 @@ struct thread_data {
     char * addr;
     struct authenticator * auth;
     struct published_stream_map * map;
+    struct web_api_data * data;
 };
 
 void * run_web_subscriber(void * _d);
 
 void web_subscriber(
         int sock, bool read_web_ip_from_headers, char * addr,
-        struct authenticator * auth, struct published_stream_map * map)
+        struct authenticator * auth, struct published_stream_map * map,
+        struct web_api_data * data)
 {
     struct thread_data * d = malloc(sizeof(struct thread_data));
     d->sock = sock;
@@ -29,6 +32,7 @@ void web_subscriber(
     d->addr = addr;
     d->auth = auth;
     d->map = map;
+    d->data = data;
 
     pthread_t thread_handle;
     int pthread_err; 
@@ -40,9 +44,9 @@ void web_subscriber(
     assert(pthread_err == 0);
 }
 
-// Return heap allocated string with contents equal to str with `prefix` and
+// Return stack allocated string with contents equal to str with `prefix` and
 // trailing slash (if present) removed.
-char * strip_prefix(const char * prefix, const char * str, size_t str_len) {
+char * strip_prefix(const char * prefix, char * str, size_t str_len) {
     size_t prefix_len = strlen(prefix);
     char * stripped;
     size_t stripped_len;
@@ -53,8 +57,8 @@ char * strip_prefix(const char * prefix, const char * str, size_t str_len) {
         stripped_len = str_len - prefix_len;
     }
     // Copy into heap allocated string
-    stripped = malloc(stripped_len + 1);
-    stripped = strncpy(stripped, str + prefix_len, stripped_len);
+    stripped = str + prefix_len;
+    // stripped = strncpy(stripped, str + prefix_len, stripped_len);
     stripped[stripped_len] = '\0';
     return stripped;
 }
@@ -66,6 +70,7 @@ void * run_web_subscriber(void * _d) {
     char * addr = d->addr;
     struct authenticator * auth = d->auth;
     struct published_stream_map * map = d->map;
+    struct web_api_data * data = d->data;
     free(d);
 
     char buf[1024];
@@ -79,14 +84,14 @@ void * run_web_subscriber(void * _d) {
     // HTTP request data
     const char * method;
     size_t method_len;
-    const char * path;
+    char * path;
     size_t path_len;
     int minor_version;
     struct phr_header headers[100];
     size_t num_headers = 100;
 
     int parse_err = phr_parse_request(
-            buf, sizeof(buf), &method, &method_len, &path,
+            buf, sizeof(buf), &method, &method_len, (const char **) &path,
             &path_len,&minor_version, headers, &num_headers, 0);
 
     if (parse_err <= 0) return NULL;
@@ -98,7 +103,7 @@ void * run_web_subscriber(void * _d) {
             name = malloc(1);
             name[0] = '\0';
         } else {
-            name = strip_prefix("/stream/", path, path_len);
+            name = strdup(strip_prefix("/stream/", path, path_len));
         }
 
         if (read_web_ip_from_headers) {
@@ -123,11 +128,13 @@ void * run_web_subscriber(void * _d) {
 
         add_web_subscriber(map, auth, name, addr, sock);
     } else {
-        if (path_len > 5 && strncmp("/api/", path, 5) == 0) {
-            // /api/ TODO: implement this later
-        }
         free(addr);
-        close(sock);
+        if (path_len > 5 && strncmp("/api/", path, 5) == 0) {
+            path = strip_prefix("/api/", path, path_len);
+            web_api(map, data, path, sock);
+        } else {
+            close(sock);
+        }
     }
 
     return NULL;

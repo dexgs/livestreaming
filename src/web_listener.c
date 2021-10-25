@@ -10,6 +10,7 @@
 #include "authenticator.h"
 #include "web_listener.h"
 #include "web_subscriber.h"
+#include "web_api.h"
 
 #ifndef WEB_LISTEN_BACKLOG
 #define WEB_LISTEN_BACKLOG 10
@@ -84,8 +85,9 @@ void * run_web_listener(void * _d) {
     struct sockaddr_in client_addr = d->addr;
     free(d);
 
-    unsigned int client_addr_len = sizeof(client_addr);
+    struct web_api_data * data = create_web_api_data();
 
+    unsigned int client_addr_len = sizeof(client_addr);
 
     struct timeval timeout = { .tv_sec = 0, .tv_usec = 5000 };
 
@@ -108,7 +110,9 @@ void * run_web_listener(void * _d) {
         } else {
             char * addr_str = sockaddr_to_string(
                     (struct sockaddr *) &client_addr, client_addr_len);
-            web_subscriber(client_sock, read_web_ip_from_headers, addr_str, auth, map);
+            web_subscriber(
+                    client_sock, read_web_ip_from_headers,
+                    addr_str, auth, map, data);
         }
     }
 
