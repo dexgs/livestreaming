@@ -315,7 +315,9 @@ void sort_stream_info(
     }
 }
 
-char ** stream_names(struct published_stream_map * map, unsigned int num_streams) {
+char ** stream_names(
+        struct published_stream_map * map, unsigned int * num_streams)
+{
     int mutex_lock_err;
 
     mutex_lock_err = pthread_mutex_lock(&map->map_lock);
@@ -326,7 +328,10 @@ char ** stream_names(struct published_stream_map * map, unsigned int num_streams
     mutex_lock_err = pthread_mutex_unlock(&map->map_lock);
     assert(mutex_lock_err == 0);
 
-    if (streams_len == 0) return NULL;
+    if (streams_len == 0) {
+        *num_streams = 0;
+        return NULL;
+    }
 
     struct stream_info ** streams =
         malloc(sizeof(struct stream_info *) * streams_len);
@@ -377,29 +382,24 @@ char ** stream_names(struct published_stream_map * map, unsigned int num_streams
         assert(mutex_lock_err == 0);
     }
 
+    if (streams_index == 0) {
+        free(streams);
+        return NULL;
+    }
+
     streams = realloc(streams, sizeof(struct stream_info *) * streams_index);
 
     // Sort stream info by number of subscribers (quicksort)
     sort_stream_info(streams, streams_index);
 
-    // `num_streams` cannot exceed the number of available streams
-    if (num_streams > streams_index || num_streams == 0) {
-        num_streams = streams_index;
-    }
-
-    // free excess streams
-    for (unsigned int i = num_streams; i < streams_index; i++) {
-        free(streams[i]->name);
-        free(streams[i]);
-    }
-
-    char ** stream_names = malloc(sizeof(char *) * num_streams);
-    for(unsigned int i = 0; i < num_streams; i++) {
+    char ** stream_names = malloc(sizeof(char *) * streams_index);
+    for(unsigned int i = 0; i < streams_index; i++) {
         stream_names[i] = streams[i]->name;
         free(streams[i]);
     }
     free(streams);
 
+    *num_streams = streams_index;
     return stream_names;
 }
 
@@ -587,6 +587,12 @@ void add_srt_subscriber(
     }
 }
 
+const char * WEB_SUBSCRIBER_RESPONSE = 
+    "HTTP/1.1 200 OK\r\n"
+    "Access-Control-Allow-Origin: *\r\n"
+    "Content-Type: video/mp2t\r\n"
+    "Transfer-Encoding: chunked\r\n\r\n";
+
 void add_web_subscriber(
         struct published_stream_map * map,
         struct authenticator * auth, char * name, char * addr, int sock)
@@ -597,12 +603,7 @@ void add_web_subscriber(
     if (data == NULL) {
         close(sock);
     } else {
-        char * response = 
-            "HTTP/1.1 200 OK\r\n"
-            "Access-Control-Allow-Origin: *\r\n"
-            "Content-Type: video/mp2t\r\n"
-            "Transfer-Encoding: chunked\r\n\r\n";
-        write(sock, response, strlen(response));
+        write(sock, WEB_SUBSCRIBER_RESPONSE, strlen(WEB_SUBSCRIBER_RESPONSE));
 
         add_web_subscriber_to_stream(data, sock);
         int mutex_lock_err = pthread_mutex_unlock(&data->access_lock);

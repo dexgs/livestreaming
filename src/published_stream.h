@@ -92,7 +92,7 @@ bool stream_name_in_map(struct published_stream_map * map, const char * name);
 // this, num_streams *must* be used as the length for iterating over the names
 // because the size of the array may go out of sync with the contents of the map.
 char ** stream_names(
-        struct published_stream_map * map, unsigned int num_streams);
+        struct published_stream_map * map, unsigned int * num_streams);
 
 // `*name` and `addr` should be heap allocated.
 struct published_stream_data * add_stream_to_map(
