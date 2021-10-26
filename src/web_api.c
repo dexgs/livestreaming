@@ -98,7 +98,8 @@ void active_stream_list(
     for (unsigned int i = 0; i < data->num_names && i < num_streams; i++) {
         bool is_last_name = i + 1 >= data->num_names || i + 1 >= num_streams;
 
-        size_t chunk_size = strlen(data->names[i]) + 3;
+        size_t chunk_size = strlen(data->names[i]) + 2;
+        if (!is_last_name) chunk_size++;
 
         snprintf(size_str, 10, "%lu", chunk_size);
         write(sock, size_str, strlen(size_str));
@@ -113,7 +114,7 @@ void active_stream_list(
     }
     free(size_str);
 
-    write(sock, "]\r\n", 3);
+    write(sock, "1\r\n]\r\n", 6);
     write(sock, "0\r\n\r\n", 5);
 
     close(sock);
