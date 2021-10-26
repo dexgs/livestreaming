@@ -75,7 +75,7 @@ void active_stream_list(
     mutex_lock_err = pthread_mutex_lock(&data->num_requests_lock);
     assert(mutex_lock_err == 0);
 
-    if (data->num_requests == 0) {
+    if (!generate_stream_names_list && data->num_requests == 0) {
         // Wait for `data->names` and `data->num_names` to be updated
         mutex_lock_err = pthread_mutex_lock(&data->cond_lock);
         assert(mutex_lock_err == 0);
