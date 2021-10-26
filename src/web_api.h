@@ -9,6 +9,6 @@ struct web_api_data * create_web_api_data();
 
 void web_api(
         struct published_stream_map * map, struct web_api_data * data,
-        const char * path, int sock);
+        char * path, unsigned int path_len, int sock);
 
 #endif

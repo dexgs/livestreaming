@@ -56,12 +56,14 @@ char * strip_prefix(const char * prefix, char * str, size_t str_len) {
     } else {
         stripped_len = str_len - prefix_len;
     }
-    // Copy into heap allocated string
     stripped = str + prefix_len;
-    // stripped = strncpy(stripped, str + prefix_len, stripped_len);
     stripped[stripped_len] = '\0';
     return stripped;
 }
+
+
+const char * STREAM_PATH = "/stream/";
+const char * API_PATH = "/api/";
 
 void * run_web_subscriber(void * _d) {
     struct thread_data * d = (struct thread_data *) _d;
@@ -74,7 +76,9 @@ void * run_web_subscriber(void * _d) {
     free(d);
 
     char buf[1024];
-    ssize_t bytes_read = read(sock, buf, sizeof(buf));
+    // "- 1" is significant. It's here so that we can make any substring of
+    // `buf` null terminated without writing to out-of-bounds memory.
+    ssize_t bytes_read = read(sock, buf, sizeof(buf) - 1);
     if (bytes_read < 0) {
         close(sock);
         free(addr);
@@ -91,19 +95,22 @@ void * run_web_subscriber(void * _d) {
     size_t num_headers = 100;
 
     int parse_err = phr_parse_request(
-            buf, sizeof(buf), &method, &method_len, (const char **) &path,
+            buf, sizeof(buf) - 1, &method, &method_len, (const char **) &path,
             &path_len,&minor_version, headers, &num_headers, 0);
 
     if (parse_err <= 0) return NULL;
 
-    if (8 <= path_len && strncmp("/stream/", path, 8) == 0) {
+    if (
+            strlen(STREAM_PATH) <= path_len
+            && strncmp(STREAM_PATH, path, strlen(STREAM_PATH)) == 0) 
+    {
         // /stream/
         char * name;
         if (path_len == 8) {
             name = malloc(1);
             name[0] = '\0';
         } else {
-            name = strdup(strip_prefix("/stream/", path, path_len));
+            name = strdup(strip_prefix(STREAM_PATH, path, path_len));
         }
 
         if (read_web_ip_from_headers) {
@@ -129,9 +136,12 @@ void * run_web_subscriber(void * _d) {
         add_web_subscriber(map, auth, name, addr, sock);
     } else {
         free(addr);
-        if (path_len > 5 && strncmp("/api/", path, 5) == 0) {
+        if (
+                path_len > strlen(API_PATH)
+                && strncmp(API_PATH, path, strlen(API_PATH)) == 0)
+        {
             path = strip_prefix("/api/", path, path_len);
-            web_api(map, data, path, sock);
+            web_api(map, data, path, path_len - strlen(API_PATH), sock);
         } else {
             close(sock);
         }
