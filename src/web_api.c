@@ -109,8 +109,9 @@ void active_stream_list(
         write(sock, "\"", 1);
 
         if (!is_last_name) {
-            write(sock, ",\r\n", 3);
+            write(sock, ",", 1);
         }
+        write(sock, "\r\n", 2);
     }
     free(size_str);
 
