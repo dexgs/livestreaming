@@ -26,13 +26,13 @@ const char * HTTP_404 =
 
 
 struct web_api_data {
-    pthread_mutex_t update_lock;
     unsigned int num_requests;
     pthread_mutex_t num_requests_lock;
 
     pthread_mutex_t cond_lock;
     pthread_cond_t names_swap_cond;
     bool skip_cond;
+    pthread_mutex_t skip_cond_lock;
 
     unsigned int num_names;
     char ** names;
@@ -42,7 +42,7 @@ struct web_api_data * create_web_api_data() {
     struct web_api_data * data = malloc(sizeof(struct web_api_data));
 
     int mutex_init_err;
-    mutex_init_err = pthread_mutex_init(&data->update_lock, NULL);
+    mutex_init_err = pthread_mutex_init(&data->skip_cond_lock, NULL);
     assert(mutex_init_err == 0);
     mutex_init_err = pthread_mutex_init(&data->num_requests_lock, NULL);
     assert(mutex_init_err == 0);
@@ -125,29 +125,37 @@ void active_stream_list(
     data->num_requests--;
 
     if (data->num_requests == 0) {
-        if (generate_stream_names_list) {
-            data->skip_cond = true;
-        } else {
-            cond_err = pthread_cond_signal(&data->names_swap_cond);
-            assert(cond_err == 0);
-        }
+        mutex_lock_err = pthread_mutex_lock(&data->skip_cond_lock);
+        assert(mutex_lock_err == 0);
+
+        data->skip_cond = true;
+
+        mutex_lock_err = pthread_mutex_unlock(&data->skip_cond_lock);
+        assert(mutex_lock_err == 0);
+
+        cond_err = pthread_cond_signal(&data->names_swap_cond);
+        assert(cond_err == 0);
     }
 
     mutex_lock_err = pthread_mutex_unlock(&data->num_requests_lock);
     assert(mutex_lock_err == 0);
 
     if (generate_stream_names_list) {
-        // If the thread handling the last request is this thread
+        unsigned int num_names = 0;
+        char ** names = stream_names(map, &num_names);
+
+        mutex_lock_err = pthread_mutex_lock(&data->skip_cond_lock);
+        assert(mutex_lock_err == 0);
+
         if (data->skip_cond) {
             data->skip_cond = false;
         } else {
-            // Wait for last request to finish
             cond_err = pthread_cond_wait(&data->names_swap_cond, &data->cond_lock);
             assert(cond_err == 0);
         }
 
-        unsigned int num_names = 0;
-        char ** names = stream_names(map, &num_names);
+        mutex_lock_err = pthread_mutex_unlock(&data->skip_cond_lock);
+        assert(mutex_lock_err == 0);
 
         unsigned int old_num_names = data->num_names;
         char ** old_names = data->names;
