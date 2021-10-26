@@ -6,38 +6,48 @@
         <link rel="stylesheet" href="css/styles.css"/>
     </head>
     <body>
-        <h1>Live Streaming</h1>
+        <div id="content">
+            <h1>Live Streaming</h1>
 
-        <noscript>
-            <p class="error">
+            <noscript>
+                <p class="error">
                 This page requires JavaScript!
-            </p>
-        </noscript>
+                </p>
+            </noscript>
 
-        <video controls id="stream-player" onplay="startPlayer();" width="700px"></video>
+            <video controls id="stream-player" onplay="startPlayer();" width="700px"></video>
 
-        <form id="stream-setup" onsubmit="return false;">
-            <fieldset title="If you disable the buffer, you can achieve lower latency at the cost of stability. If you want a shorter delay, lower the buffer size or disable the buffer entirely. If the stream playback is choppy/unstable, increase the buffer size.">
-                <label for="enable-buffer">Enable buffer:</label>
-                <input id="enable-buffer" name="enable-buffer" type="checkbox" checked="checked" onchange="document.getElementById('buffer-size').disabled = !this.checked;"/>
+            <form id="stream-setup" onsubmit="return false;">
+                <fieldset title="If you disable the buffer, you can achieve lower latency at the cost of stability. If you want a shorter delay, lower the buffer size or disable the buffer entirely. If the stream playback is choppy/unstable, increase the buffer size.">
+                    <label for="enable-buffer">Enable buffer:</label>
+                    <input id="enable-buffer" name="enable-buffer" type="checkbox" checked="checked" onchange="document.getElementById('buffer-size').disabled = !this.checked;"/>
 
-                <label for="buffer-size">Buffer size:</label>
-                <input id="buffer-size" name="buffer-size" type="range" min=0 max=1000 value="384" oninput="this.nextElementSibling.value = this.value + 'kB'"/>
-                <output></output>
-                <span class="info" title="You must reload the stream to apply buffer settings.">?</span>
-            </fieldset>
+                    <label for="buffer-size">Buffer size:</label>
+                    <input id="buffer-size" name="buffer-size" type="range" min=0 max=1000 value="384" oninput="this.nextElementSibling.value = this.value + 'kB'"/>
+                    <output></output>
+                    <span class="info" title="You must reload the stream to apply buffer settings.">?</span>
+                </fieldset>
 
-            <fieldset>
-                <label for="stream-name">Stream name:</label>
-                <input id="stream-name" name="stream-name" type="text"/>
-                <input type="submit" value="Open Stream"/>
-            </fieldset>
-        </form>
+                <fieldset>
+                    <label for="stream-name">Stream name:</label>
+                    <input id="stream-name" name="stream-name" type="text"/>
+                    <input type="submit" value="Open Stream"/>
+                </fieldset>
+            </form>
 
-        <p class="instructions">
+            <p class="instructions">
             To watch a stream, type its name into the above text field and click
-            the "Open Stream" button.
-        </p>
+            the "Open Stream" button
+            </p>
+
+            <div id="stream-list-container" style="display: none">
+                <h2 dir="ltr">
+                    Active Streams
+                    <span class="info" title="Click on a stream to watch it.">?</span>
+                </h2>
+                <ul id="stream-list"></ul>
+            </div>
+        </div>
 
         <footer>
             Playback in browser is achieved with
@@ -48,6 +58,7 @@
 
         <script src="js/mpegts/mpegts.js"></script>
         <script src="js/config.js"></script>
+        <script src="js/stream_list.js"></script>
         <script src="js/play_stream.js"></script>
     </body>
 </html>

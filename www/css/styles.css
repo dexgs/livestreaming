@@ -1,5 +1,6 @@
 html {
     font-family: sans-serif;
+    height: 100%;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -9,12 +10,19 @@ html {
 }
 
 body {
+    display: flex;
+    flex-direction: column;
     max-width: 90%;
     width: 20cm;
-    margin:auto;
+    margin: auto;
+    height: 100%;
 }
 
-h1 {
+div#content {
+    flex-grow: 1;
+}
+
+h1, h2 {
     color: dodgerblue;
 }
 
@@ -62,9 +70,13 @@ form#stream-setup output {
     text-align: center;
 }
 
-form#stream-setup span.info {
+span.info {
+    display: inline-block;
+    font-size: 13pt;
     width: 20px;
     height: 20px;
+    color: #555;
+    font-weight: normal;
     border: 1px solid gray;
     border-radius: 50%;
     line-height: 18px;
@@ -88,15 +100,66 @@ p.instructions {
     color: gray;
 }
 
-footer {
-    clear: both;
+div#stream-list-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    max-height: 100%;
+    margin-left: 20px;
+
+    min-width: 200px;
+    max-width: calc((100% - 20cm - 80px) / 2);
+
+    /* Put scrollbar on left side */
+    direction: rtl;
+    overflow-y: auto;
+}
+
+@media only screen and (max-width: calc(20cm + 240px * 2)) {
+    div#stream-list-container {
+        padding: unset;
+        position: unset;
+        width: 100%;
+        margin-left: 0;
+
+        max-height: unset;
+        min-width: unset;
+        max-width: unset;
+
+        direction: ltr;
+        border-top: 1px solid lightgray;
+    }
+}
+
+div#stream-list-container > h2 {
+    font-size: 16pt;
+    margin-bottom: 5px;
+}
+
+ul#stream-list {
+    white-space: nowrap;
+    padding: 0;
+    margin: 0;
+    direction: ltr;
+}
+
+ul#stream-list > li {
+    padding: 5px 0;
+}
+
+ul#stream-list * {
+    max-width: 100%;
     width: 100%;
+    overflow-x: hidden;
+    text-overflow: ellipsis;
+    font-size: 11pt;
+}
+
+footer {
     text-align: center;
     font-size: 10pt;
-    position: fixed;
-    bottom: 5px;
-    left: 0;
     color: gray;
+    padding: 10px;
 }
 
 a {

@@ -1,8 +1,13 @@
 window.onload = setup;
 
+const streamNameInput = document.getElementById("stream-name");
+const streamPlayer = document.getElementById("stream-player");
+const enableBufferInput = document.getElementById("enable-buffer");
+const bufferSizeInput = document.getElementById("buffer-size");
+
 function setup() {
     let hash = window.location.hash;
-    document.getElementById("stream-name").value = hash.substring(1, hash.length);
+    streamNameInput.value = decodeURI(hash.substring(1, hash.length));
     let form = document.getElementById("stream-setup");
     form.onsubmit = playStream;
     let bufferSizeInput = document.getElementById("buffer-size");
@@ -11,29 +16,36 @@ function setup() {
 
 var lastStreamURL = "";
 function startPlayer() {
-    if (document.getElementById("stream-name").value != lastStreamURL) {
+    if (streamNameInput.value != lastStreamURL) {
         playStream();
-        lastStreamURL = document.getElementById("stream-name").value;
     }
 }
 
 function playStream() {
-    if (mpegts.getFeatureList().mseLivePlayback) {
-        let streamName = document.getElementById("stream-name").value;
-        window.location.hash = streamName;
-        var videoElement = document.getElementById("stream-player");
-        var player = mpegts.createPlayer({
-            type: "m2ts",
-            isLive: true,
-            url: stream_backend_url + "/stream/" + streamName,
-            lazyLoad: false,
-            enableStashBuffer: document.getElementById("enable-buffer").checked,
-            stashInitialSize: document.getElementById("buffer-size").value * 1000
-        });
-        player.attachMediaElement(videoElement);
-        player.load();
-        player.play();
-    }
+    let streamName = streamNameInput.value;
+
+    lastStreamURL = streamName;
+    fetch(stream_backend_url + "/api/stream/" + streamName)
+    .then(response => {
+        if (response.ok) {
+            if (mpegts.getFeatureList().mseLivePlayback) {
+                window.location.hash = streamName;
+                var videoElement = streamPlayer;
+                var player = mpegts.createPlayer({
+                    type: "m2ts",
+                    isLive: true,
+                    url: stream_backend_url + "/stream/" + streamName,
+                    lazyLoad: false,
+                    enableStashBuffer: enableBufferInput.checked,
+                    stashInitialSize: bufferSizeInput.value * 1000
+                });
+                player.attachMediaElement(videoElement);
+                player.load();
+                player.play();
+            }
+        } else {
+        }
+    });
 
     return false;
 }
