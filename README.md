@@ -36,6 +36,6 @@ connections, i.e. if `ShaRT` is accessible over HTTP at
 The following HTTP endpoints are exposed:
 
 - `/api/streams/N` Returns a JSON-encoded list of stream names with length `N`
-  sorted by number of viewers.
+  sorted by number of viewers. If `N` is `0`, the full stream list will be returned.
 - `/api/stream/NAME` Returns the number of viewers for `NAME`. Returns `404` if
   there is no stream called `NAME` being published.
