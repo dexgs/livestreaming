@@ -75,6 +75,13 @@ void active_stream_list(
     mutex_lock_err = pthread_mutex_lock(&data->num_requests_lock);
     assert(mutex_lock_err == 0);
 
+    if (data->num_requests == 0) {
+        // Wait for `data->names` and `data->num_names` to be updated
+        mutex_lock_err = pthread_mutex_lock(&data->cond_lock);
+        assert(mutex_lock_err == 0);
+        mutex_lock_err = pthread_mutex_unlock(&data->cond_lock);
+        assert(mutex_lock_err == 0);
+    }
     data->num_requests++;
 
     mutex_lock_err = pthread_mutex_unlock(&data->num_requests_lock);
@@ -123,14 +130,11 @@ void active_stream_list(
         } else {
             cond_err = pthread_cond_signal(&data->names_swap_cond);
             assert(cond_err == 0);
-
-            // Wait for `data->names` and `data->num_names` to be updated
-            mutex_lock_err = pthread_mutex_lock(&data->cond_lock);
-            assert(mutex_lock_err == 0);
-            mutex_lock_err = pthread_mutex_unlock(&data->cond_lock);
-            assert(mutex_lock_err == 0);
         }
     }
+
+    mutex_lock_err = pthread_mutex_unlock(&data->num_requests_lock);
+    assert(mutex_lock_err == 0);
 
     if (generate_stream_names_list) {
         // If the thread handling the last request is this thread
@@ -160,9 +164,6 @@ void active_stream_list(
             free(old_names);
         }
     }
-
-    mutex_lock_err = pthread_mutex_unlock(&data->num_requests_lock);
-    assert(mutex_lock_err == 0);
 }
 
 
