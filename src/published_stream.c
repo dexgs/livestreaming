@@ -284,16 +284,18 @@ unsigned int partition_stream_info(
         struct stream_info ** streams, unsigned int len, unsigned int pivot)
 {
     struct stream_info * pivot_info = streams[pivot];
-    unsigned int l = 0;
-    unsigned int h = len - 1;
+    int l = -1;
+    int h = len;
 
     while (true) {
-        while (streams[l]->num_subscribers < pivot_info->num_subscribers) {
+        do {
             l++;
-        }
-        while (streams[h]->num_subscribers > pivot_info->num_subscribers) {
+        } while (streams[l]->num_subscribers > pivot_info->num_subscribers);
+
+        do {
             h--;
-        }
+        } while (streams[h]->num_subscribers < pivot_info->num_subscribers);
+
         if (l >= h) {
             return l;
         }
