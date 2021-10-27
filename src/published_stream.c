@@ -280,6 +280,7 @@ struct stream_info {
     unsigned int num_subscribers;
 };
 
+// Using Hoare's partition scheme
 unsigned int partition_stream_info(
         struct stream_info ** streams, unsigned int len, unsigned int pivot)
 {
@@ -317,6 +318,7 @@ void sort_stream_info(
     }
 }
 
+// Return list of stream names sorted by number of watchers
 char ** stream_names(
         struct published_stream_map * map, unsigned int * num_streams)
 {
@@ -340,6 +342,7 @@ char ** stream_names(
 
     unsigned int streams_index = 0;
 
+    // Collect list of stream info
     for (int i = 0; i < MAP_SIZE; i++) {
         mutex_lock_err = pthread_mutex_lock(&map->map_lock);
         assert(mutex_lock_err == 0);
@@ -368,6 +371,7 @@ char ** stream_names(
                     pthread_mutex_unlock(&node->data->num_subscribers_lock);
                 assert (mutex_lock_err == 0);
 
+                // If there isn't enough room to add another stream
                 if (streams_index >= streams_len) {
                     streams_len *= 2;
                     streams =
