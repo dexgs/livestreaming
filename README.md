@@ -35,7 +35,8 @@ See [USAGE.md](USAGE.md)
 ## Notes
 
 - Connections for watching a stream are handled in non-blocking mode and traffic is managed
-"leaky bucket" style, i.e. if ShaRT can't broadcast the stream to connected clients in time
+"[leaky bucket](https://en.wikipedia.org/wiki/Leaky_bucket)"
+style, i.e. if ShaRT can't broadcast the stream to connected clients in time
 with the rate at which data arrives, it will drop connections until it can.
 
 ## Web Player
