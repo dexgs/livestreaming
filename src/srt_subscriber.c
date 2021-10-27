@@ -15,6 +15,10 @@ void * srt_subscriber(void * _d) {
     struct published_stream_map * map = d->map;
     free(d);
 
+    int ms = 10;
+    int set_flag_err = srt_setsockflag(sock, SRTO_SNDTIMEO, &ms, sizeof(ms));
+    assert(set_flag_err == 0);
+
     char * name = get_socket_stream_id(sock);
 
     add_srt_subscriber(map, auth, name, addr, sock);
