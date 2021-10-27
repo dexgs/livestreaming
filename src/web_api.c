@@ -108,7 +108,7 @@ void active_stream_list(
         size_t chunk_size = strlen(data->names[i]) + 2;
         if (!is_last_name) chunk_size++;
 
-        snprintf(size_str, 10, "%lu", chunk_size);
+        snprintf(size_str, 10, "%lx", chunk_size);
         write(sock, size_str, strlen(size_str));
         write(sock, "\r\n", 2);
         write(sock, "\"", 1);
@@ -208,7 +208,7 @@ void single_stream_data(
         write(sock, HTTP_CONTENT_LENGTH, strlen(HTTP_CONTENT_LENGTH));
 
         char * str_len_str = malloc(10);
-        snprintf(str_len_str, 10, "%lu", str_len);
+        snprintf(str_len_str, 10, "%lx", str_len);
 
         write(sock, str_len_str, strlen(str_len_str));
         write(sock, "\r\n\r\n", 4);
