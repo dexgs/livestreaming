@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
+#include <fcntl.h> 
 #include "published_stream.h"
 #include "authenticator.h"
 #include "srt/srt.h"
@@ -553,6 +554,7 @@ bool max_subscribers_exceeded(
     return max_subscribers_exceeded;
 }
 
+// Common setup between adding an SRT subscriber and adding a web subscriber
 struct published_stream_data * add_subscriber_common(
         struct published_stream_map * map,
         struct authenticator * auth, char * name, char * addr)
@@ -587,7 +589,14 @@ void add_srt_subscriber(
     if (data == NULL) {
         srt_close(sock);
     } else {
-        add_srt_subscriber_to_stream(data, sock);
+        bool no = false;
+        int set_flag_err = srt_setsockflag(sock, SRTO_SNDSYN, &no, sizeof(no));
+
+        if (set_flag_err != SRT_ERROR) {
+            add_srt_subscriber_to_stream(data, sock);
+        } else {
+            srt_close(sock);
+        }
         int mutex_lock_err = pthread_mutex_unlock(&data->access_lock);
         assert(mutex_lock_err == 0);
     }
@@ -611,7 +620,13 @@ void add_web_subscriber(
     } else {
         write(sock, WEB_SUBSCRIBER_RESPONSE, strlen(WEB_SUBSCRIBER_RESPONSE));
 
-        add_web_subscriber_to_stream(data, sock);
+        int set_access_mode_err = fcntl(sock, F_SETFL, O_NONBLOCK);
+
+        if (set_access_mode_err == 0) {
+            add_web_subscriber_to_stream(data, sock);
+        } else {
+            close(sock);
+        }
         int mutex_lock_err = pthread_mutex_unlock(&data->access_lock);
         assert(mutex_lock_err == 0);
     }
