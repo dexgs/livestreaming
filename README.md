@@ -32,6 +32,12 @@ The following values can be defined at compile time:
 
 See [USAGE.md](USAGE.md)
 
+## Notes
+
+- Connections for watching a stream are handled in non-blocking mode and traffic is managed
+"leaky bucket" style, i.e. if ShaRT can't broadcast the stream to connected clients in time
+with the rate at which data arrives, it will drop connections until it can.
+
 ## Web Player
 
 An example webpage for playing live streams using [mpegts.js](https://github.com/xqq/mpegts.js)
