@@ -31,7 +31,11 @@ function playStream() {
     .then(response => {
         if (response.ok) {
             if (player) {
+                player.pause();
+                player.detachMediaElement();
                 player.unload();
+                player.destroy();
+                player = null;
             }
             if (mpegts.getFeatureList().mseLivePlayback) {
                 window.location.hash = streamName;
