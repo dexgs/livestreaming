@@ -164,8 +164,7 @@ void active_stream_list(
             cond_err = pthread_cond_wait(&data->names_swap_cond, &data->cond_lock);
             assert(cond_err == 0);
         }
-
-        mutex_lock_err = pthread_mutex_unlock(&data->skip_cond_lock);
+        mutex_lock_err = pthread_mutex_unlock(&data->cond_lock);
         assert(mutex_lock_err == 0);
 
         unsigned int old_num_names = data->num_names;
@@ -173,7 +172,7 @@ void active_stream_list(
         data->names = names;
         data->num_names = num_names;
 
-        mutex_lock_err = pthread_mutex_unlock(&data->cond_lock);
+        mutex_lock_err = pthread_mutex_unlock(&data->skip_cond_lock);
         assert(mutex_lock_err == 0);
 
         // Clean up memory
