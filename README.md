@@ -19,6 +19,13 @@ Clone the repository
 and run `make all` in its directory. Make sure you have `cmake` installed
 (required to build SRT). An executable will be output at `bin/ShaRT`.
 
+The following values can be defined at compile time:
+
+- `WEB_LISTEN_BACKLOG` - `int`
+- `SRT_LISTEN_BACKLOG` - `int`
+- `MAP_SIZE` - `int`
+- `UNLISTED_STREAM_NAME_PREFIX` - `string`
+
 ## Usage
 
 See [USAGE.md](USAGE.md)
