@@ -61,6 +61,7 @@ struct web_api_data * create_web_api_data() {
 }
 
 
+// Return list of active streams sorted by number of viewers
 void active_stream_list(
         struct published_stream_map * map, struct web_api_data * data,
         unsigned int num_streams, int sock)
@@ -75,11 +76,16 @@ void active_stream_list(
     mutex_lock_err = pthread_mutex_lock(&data->num_requests_lock);
     assert(mutex_lock_err == 0);
 
-    if (!generate_stream_names_list && data->num_requests == 0) {
-        // Wait for `data->names` and `data->num_names` to be updated
-        mutex_lock_err = pthread_mutex_lock(&data->cond_lock);
+    if (data->num_requests == 0) {
+        // If this is the first request, we want to make sure that the thread
+        // generating the new streams list does not swap out `names` and
+        // `num_names` until every connection in this "group" has finished.
+        mutex_lock_err = pthread_mutex_lock(&data->skip_cond_lock);
         assert(mutex_lock_err == 0);
-        mutex_lock_err = pthread_mutex_unlock(&data->cond_lock);
+
+        data->skip_cond = false;
+
+        mutex_lock_err = pthread_mutex_unlock(&data->skip_cond_lock);
         assert(mutex_lock_err == 0);
     }
     data->num_requests++;
@@ -87,6 +93,7 @@ void active_stream_list(
     mutex_lock_err = pthread_mutex_unlock(&data->num_requests_lock);
     assert(mutex_lock_err == 0);
 
+    // Write the JSON-econded data to the socket, then close the connection
     write(sock, HTTP_JSON_OK, strlen(HTTP_JSON_OK));
     write(sock, HTTP_CHUNKED_ENCODING, strlen(HTTP_CHUNKED_ENCODING));
     write(sock, "\r\n", 2);
@@ -148,6 +155,9 @@ void active_stream_list(
         mutex_lock_err = pthread_mutex_lock(&data->skip_cond_lock);
         assert(mutex_lock_err == 0);
 
+        // If the last connection finished before we got to this point, `skip_cond`
+        // will be set to true and we know we don't have to wait for the condition
+        // variable to be signalled.
         if (data->skip_cond) {
             data->skip_cond = false;
         } else {
@@ -166,6 +176,7 @@ void active_stream_list(
         mutex_lock_err = pthread_mutex_unlock(&data->cond_lock);
         assert(mutex_lock_err == 0);
 
+        // Clean up memory
         for (unsigned int i = 0; i < old_num_names; i++) {
             free(old_names[i]);
         }
@@ -176,6 +187,7 @@ void active_stream_list(
 }
 
 
+// Send the number of watchers for a stream or 404 if the stream does not exist
 void single_stream_data(
         struct published_stream_map * map, const char * stream_name, int sock)
 {
