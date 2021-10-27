@@ -27,7 +27,6 @@ function showActiveStreams(list) {
     }
 
     if (list.length == 0) {
-        console.log("nada");
         streamListContainer.style.display = "none";
     } else {
         streamListContainer.style.display = "unset";
