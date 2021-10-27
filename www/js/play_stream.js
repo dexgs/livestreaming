@@ -1,5 +1,7 @@
 window.onload = setup;
 
+var player;
+
 const streamNameInput = document.getElementById("stream-name");
 const streamPlayer = document.getElementById("stream-player");
 const enableBufferInput = document.getElementById("enable-buffer");
@@ -28,10 +30,13 @@ function playStream() {
     fetch(stream_backend_url + "/api/stream/" + streamName)
     .then(response => {
         if (response.ok) {
+            if (player) {
+                player.unload();
+            }
             if (mpegts.getFeatureList().mseLivePlayback) {
                 window.location.hash = streamName;
                 var videoElement = streamPlayer;
-                var player = mpegts.createPlayer({
+                player = mpegts.createPlayer({
                     type: "m2ts",
                     isLive: true,
                     url: stream_backend_url + "/stream/" + streamName,
