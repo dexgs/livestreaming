@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <pthread.h>
 #include "authenticator.h"
-#include "srt/srt.h"
+#include "srt.h"
 
 #ifndef UNLISTED_STREAM_NAME_PREFIX
 #define UNLISTED_STREAM_NAME_PREFIX "_"

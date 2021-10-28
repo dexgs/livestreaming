@@ -10,7 +10,7 @@
 #include "srt_common.h"
 #include "authenticator.h"
 #include "published_stream.h"
-#include "srt/srt.h"
+#include "srt.h"
 
 struct thread_data {
     SRTSOCKET sock;

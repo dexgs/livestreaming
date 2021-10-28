@@ -7,7 +7,7 @@
 #include <fcntl.h> 
 #include "published_stream.h"
 #include "authenticator.h"
-#include "srt/srt.h"
+#include "srt.h"
 
 
 void increment_num_subscribers(struct published_stream_data * data, int inc) {

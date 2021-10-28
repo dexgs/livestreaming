@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include "srt_publisher.h"
-#include "srt/srt.h"
+#include "srt.h"
 #include "published_stream.h"
 #include "web_subscriber.h"
 #include "authenticator.h"
