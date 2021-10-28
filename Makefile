@@ -41,5 +41,5 @@ srt:
 
 .PHONY: clean
 clean:
-	rm -f $(obj) test/test.o bin
+	rm -rf $(obj) test/test.o bin
 	rm -rf $(THIRDPARTY_DIR)/srt/_build
