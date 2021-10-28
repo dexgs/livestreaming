@@ -62,7 +62,11 @@ struct web_api_data * create_web_api_data() {
 }
 
 
-// Return list of active streams sorted by number of viewers
+// Return list of active streams sorted by number of viewers. The first thread
+// to handle a request in a "group" will lock `update_lock` and generate a new
+// stream list. It will then swap out current stream list with the new one when
+// all other threads finish writing over their sockets. New threads will wait
+// for the swap to finish before they write to their sockets.
 void active_stream_list(
         struct published_stream_map * map, struct web_api_data * data,
         unsigned int num_streams, int sock)
