@@ -6,6 +6,8 @@
 #include <sys/time.h>
 #include <signal.h>
 #include <stdbool.h>
+#include <string.h>
+#include <errno.h>
 #include "published_stream.h"
 #include "authenticator.h"
 #include "web_listener.h"
@@ -89,21 +91,28 @@ void * run_web_listener(void * _d) {
 
     unsigned int client_addr_len = sizeof(client_addr);
 
-    struct timeval timeout = { .tv_sec = 0, .tv_usec = 5000 };
+    struct timeval timeout = { .tv_sec = 0, .tv_usec = 10000 };
 
     while (true) {
         int client_sock = accept(
                 sock, (struct sockaddr *) &client_addr, &client_addr_len);
-        if (client_sock == -1) continue;
+        if (client_sock < 0) continue;
 
         int set_sock_opt_err;
+
         set_sock_opt_err = setsockopt(
                 client_sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
-        assert(set_sock_opt_err == 0);
+        if (set_sock_opt_err != 0) {
+            close(client_sock);
+            continue;
+        }
 
         set_sock_opt_err = setsockopt(
                 client_sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-        assert(set_sock_opt_err == 0);
+        if (set_sock_opt_err != 0) {
+            close(client_sock);
+            continue;
+        }
 
         if (max_pending_connections_exceeded(auth)) {
             close(client_sock);

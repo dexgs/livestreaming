@@ -98,7 +98,10 @@ void * run_web_subscriber(void * _d) {
             buf, sizeof(buf) - 1, &method, &method_len, (const char **) &path,
             &path_len,&minor_version, headers, &num_headers, 0);
 
-    if (parse_err <= 0) return NULL;
+    if (parse_err <= 0) {
+        free(addr);
+        return NULL;
+    }
 
     if (
             strlen(STREAM_PATH) <= path_len

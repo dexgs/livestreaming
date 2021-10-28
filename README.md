@@ -19,15 +19,31 @@ Clone the repository
 and run `make all` in its directory. Make sure you have `cmake` installed
 (required to build SRT). An executable will be output at `bin/ShaRT`.
 
+The following values can be defined at compile time:
+
+- `WEB_LISTEN_BACKLOG` : `int` - Connection backlog size for HTTP
+- `SRT_LISTEN_BACKLOG` : `int` - Connection backlog size for SRT
+- `MAP_SIZE` : `int` - Number of "buckets" in the hashmap which stores stream information.
+  You should set this to *at least* 2x the maximum number of streams you expect to handle.
+- `UNLISTED_STREAM_NAME_PREFIX` : `string` - Streams published under a name beginning with
+  this string will not be reported by the web API (default value is `_`).
+
 ## Usage
 
 See [USAGE.md](USAGE.md)
+
+## Notes
+
+- Connections for watching a stream are handled in non-blocking mode and traffic is managed
+"[leaky bucket](https://en.wikipedia.org/wiki/Leaky_bucket)"
+style, i.e. if ShaRT can't broadcast the stream to connected clients in time
+with the rate at which data arrives, it will drop connections until it can.
 
 ## Web Player
 
 An example webpage for playing live streams using [mpegts.js](https://github.com/xqq/mpegts.js)
 is provided. To use it, serve the `www` directory with a web server and set the
-value of `stream_backend_url` to the address at which `ShaRT` accepts HTTP
+value of `stream_backend_url` in `www/js/config.js` to the address at which `ShaRT` accepts HTTP
 connections, i.e. if `ShaRT` is accessible over HTTP at
 `http://example.com/streams`, set that as the value of `stream_backend_url`.
 
