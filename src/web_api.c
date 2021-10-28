@@ -9,6 +9,7 @@
 
 const char * HTTP_JSON_OK =
     "HTTP/1.1 200 OK\r\n"
+    "Connection: close\r\n"
     "Access-Control-Allow-Origin: *\r\n"
     "Content-Type: application/json\r\n";
 
@@ -29,7 +30,7 @@ struct web_api_data {
     unsigned int num_requests;
     pthread_mutex_t num_requests_lock;
 
-    pthread_mutex_t cond_lock;
+    pthread_mutex_t update_lock;
     pthread_cond_t names_swap_cond;
     bool skip_cond;
     pthread_mutex_t skip_cond_lock;
@@ -46,7 +47,7 @@ struct web_api_data * create_web_api_data() {
     assert(mutex_init_err == 0);
     mutex_init_err = pthread_mutex_init(&data->num_requests_lock, NULL);
     assert(mutex_init_err == 0);
-    mutex_init_err = pthread_mutex_init(&data->cond_lock, NULL);
+    mutex_init_err = pthread_mutex_init(&data->update_lock, NULL);
     assert(mutex_init_err == 0);
     int cond_init_err;
     cond_init_err = pthread_cond_init(&data->names_swap_cond, NULL);
@@ -71,12 +72,15 @@ void active_stream_list(
 
     // If no other thread is generating the streams list
     bool generate_stream_names_list =
-        pthread_mutex_trylock(&data->cond_lock) == 0;
+        pthread_mutex_trylock(&data->update_lock) == 0;
 
     mutex_lock_err = pthread_mutex_lock(&data->num_requests_lock);
     assert(mutex_lock_err == 0);
 
-    if (data->num_requests == 0) {
+    bool is_first_request = data->num_requests == 0;
+    data->num_requests++;
+
+    if (is_first_request) {
         // If this is the first request, we want to make sure that the thread
         // generating the new streams list does not swap out `names` and
         // `num_names` until every connection in this "group" has finished.
@@ -88,7 +92,6 @@ void active_stream_list(
         mutex_lock_err = pthread_mutex_unlock(&data->skip_cond_lock);
         assert(mutex_lock_err == 0);
     }
-    data->num_requests++;
 
     mutex_lock_err = pthread_mutex_unlock(&data->num_requests_lock);
     assert(mutex_lock_err == 0);
@@ -108,7 +111,7 @@ void active_stream_list(
         size_t chunk_size = strlen(data->names[i]) + 2;
         if (!is_last_name) chunk_size++;
 
-        snprintf(size_str, 10, "%lu", chunk_size);
+        snprintf(size_str, 10, "%lx", chunk_size);
         write(sock, size_str, strlen(size_str));
         write(sock, "\r\n", 2);
         write(sock, "\"", 1);
@@ -131,18 +134,18 @@ void active_stream_list(
     assert(mutex_lock_err == 0);
 
     data->num_requests--;
+    bool is_last_request = data->num_requests == 0;
 
-    if (data->num_requests == 0) {
+    if (is_last_request) {
         mutex_lock_err = pthread_mutex_lock(&data->skip_cond_lock);
         assert(mutex_lock_err == 0);
 
         data->skip_cond = true;
+        cond_err = pthread_cond_signal(&data->names_swap_cond);
+        assert(cond_err == 0);
 
         mutex_lock_err = pthread_mutex_unlock(&data->skip_cond_lock);
         assert(mutex_lock_err == 0);
-
-        cond_err = pthread_cond_signal(&data->names_swap_cond);
-        assert(cond_err == 0);
     }
 
     mutex_lock_err = pthread_mutex_unlock(&data->num_requests_lock);
@@ -152,28 +155,27 @@ void active_stream_list(
         unsigned int num_names = 0;
         char ** names = stream_names(map, &num_names);
 
+        mutex_lock_err = pthread_mutex_unlock(&data->update_lock);
+        assert(mutex_lock_err == 0);
+
         mutex_lock_err = pthread_mutex_lock(&data->skip_cond_lock);
         assert(mutex_lock_err == 0);
 
         // If the last connection finished before we got to this point, `skip_cond`
         // will be set to true and we know we don't have to wait for the condition
         // variable to be signalled.
-        if (data->skip_cond) {
-            data->skip_cond = false;
-        } else {
-            cond_err = pthread_cond_wait(&data->names_swap_cond, &data->cond_lock);
+        while (!data->skip_cond) {
+            cond_err = pthread_cond_wait(&data->names_swap_cond, &data->skip_cond_lock);
             assert(cond_err == 0);
         }
-
-        mutex_lock_err = pthread_mutex_unlock(&data->skip_cond_lock);
-        assert(mutex_lock_err == 0);
+        data->skip_cond = false;
 
         unsigned int old_num_names = data->num_names;
         char ** old_names = data->names;
         data->names = names;
         data->num_names = num_names;
 
-        mutex_lock_err = pthread_mutex_unlock(&data->cond_lock);
+        mutex_lock_err = pthread_mutex_unlock(&data->skip_cond_lock);
         assert(mutex_lock_err == 0);
 
         // Clean up memory
@@ -209,7 +211,7 @@ void single_stream_data(
         write(sock, HTTP_CONTENT_LENGTH, strlen(HTTP_CONTENT_LENGTH));
 
         char * str_len_str = malloc(10);
-        snprintf(str_len_str, 10, "%lu", str_len);
+        snprintf(str_len_str, 10, "%lx", str_len);
 
         write(sock, str_len_str, strlen(str_len_str));
         write(sock, "\r\n\r\n", 4);
