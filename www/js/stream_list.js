@@ -14,6 +14,7 @@ function getActiveStreams() {
 
 const streamList = document.getElementById("stream-list");
 const streamListContainer = document.getElementById("stream-list-container");
+const streamListItemTemplate = document.getElementById("stream-list-item-template");
 
 function showActiveStreams(list) {
     // Do not change the stream list while it is being hovered to avoid
@@ -33,15 +34,24 @@ function showActiveStreams(list) {
     }
 
     list.forEach(name => {
-        let item = document.createElement("LI");
-        let button = document.createElement("BUTTON");
+        let clone = streamListItemTemplate.content.cloneNode(true);
+
+        let button = clone.querySelector("BUTTON");
+        let srt = clone.querySelector(".srt-link");
+        let http = clone.querySelector(".http-link");
+
+        http.href = stream_backend_url + "/stream/" + name;
+        http.title = http.href;
+
+        srt.href = srt_url + "?streamid=" + name;
+        srt.title = srt.href;
+
         button.innerHTML = name;
-        button.title = name;
+        button.title = "Watch " + name;
         button.onclick = () => {
             streamNameInput.value = name;
             playStream();
         };
-        item.appendChild(button);
-        streamList.appendChild(item);
+        streamList.appendChild(clone);
     });
 }
