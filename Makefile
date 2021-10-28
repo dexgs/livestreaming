@@ -1,11 +1,16 @@
 THIRDPARTY_DIR = ./thirdparty
+SRT_DIR = $(THIRDPARTY_DIR)/srt
+PICOHTTP_DIR = $(THIRDPARTY_DIR)/picohttpparser
 
-srt_static = $(THIRDPARTY_DIR)/srt/_build/libsrt.a
+INCLUDE_SRT_HEADERS = -I$(SRT_DIR)/srtcore/ -I$(SRT_DIR)/_build
+INCLUDE_PICOHTTP_HEADERS = -I$(PICOHTTP_DIR)
 
-LDFLAGS += $(srt_static) -lpthread -lcrypto
+SRT_STATIC = $(SRT_DIR)/_build/libsrt.a
+
 CFLAGS += -Wall -Wextra
-CFLAGS += -Ithirdparty/srt/srtcore/ -Ithirdparty/srt/_build
-CFLAGS += -Ithirdparty/picohttpparser
+CFLAGS += $(INCLUDE_SRT_HEADERS)
+CFLAGS += $(INCLUDE_PICOHTTP_HEADERS)
+LDFLAGS += $(SRT_STATIC) -lpthread -lcrypto
 
 .DEFAULT_GOAL := ShaRT
 
