@@ -25,7 +25,8 @@ The following values can be defined at compile time:
 - `WEB_LISTEN_BACKLOG` : `int` - Connection backlog size for HTTP
 - `SRT_LISTEN_BACKLOG` : `int` - Connection backlog size for SRT
 - `MAP_SIZE` : `int` - Number of "buckets" in the hashmap which stores stream information.
-  You should set this to *at least* 2x the maximum number of streams you expect to handle.
+  You should set this to *at least* 2x the maximum number of streams you expect to handle
+  to get the best possible performance.
 - `UNLISTED_STREAM_NAME_PREFIX` : `string` - Streams published under a name beginning with
   this string will not be reported by the web API (default value is `_`).
 
