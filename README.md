@@ -39,7 +39,7 @@ See [USAGE.md](USAGE.md)
 style, i.e. if ShaRT can't broadcast the stream to connected clients in time
 with the rate at which data arrives, it will drop connections until it can.
 - Stream names may not contain the following characters:
-  `$`, `(`, `)`, `[`, `]`, `<`, `>`, `|`, `\n`, `\`, `&`, `*`, `#`, `~`, `!`,
+  `$`, `(`, `)`, `[`, `]`, `<`, `>`, `|`, `\n` (newline), `\`, `&`, `*`, `#`, `~`, `!`,
   `` ` ``, `;`, `'`, `"`.
 
 ## Web Player
