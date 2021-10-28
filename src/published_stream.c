@@ -5,6 +5,9 @@
 #include <stdbool.h>
 #include <string.h>
 #include <fcntl.h> 
+#include <sys/socket.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
 #include "published_stream.h"
 #include "authenticator.h"
 #include "srt.h"
@@ -185,10 +188,6 @@ struct published_stream_node {
     struct published_stream_node * prev;
 };
 
-
-#ifndef MAP_SIZE
-#define MAP_SIZE 500
-#endif
 
 struct published_stream_map {
     pthread_mutex_t map_lock;
@@ -589,6 +588,7 @@ void add_srt_subscriber(
     if (data == NULL) {
         srt_close(sock);
     } else {
+        // Set socket to nonblocking mode
         bool no = false;
         int set_flag_err = srt_setsockflag(sock, SRTO_SNDSYN, &no, sizeof(no));
 
@@ -618,11 +618,17 @@ void add_web_subscriber(
     if (data == NULL) {
         close(sock);
     } else {
+        // Send data as soon as possible to reduce latency
+        int yes = 1;
+        int set_opt_err =
+            setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *) &yes, sizeof(yes));
+
         write(sock, WEB_SUBSCRIBER_RESPONSE, strlen(WEB_SUBSCRIBER_RESPONSE));
 
+        // Set socket to nonblocking mode
         int set_access_mode_err = fcntl(sock, F_SETFL, O_NONBLOCK);
 
-        if (set_access_mode_err == 0) {
+        if (set_access_mode_err == 0 && set_opt_err >= 0) {
             add_web_subscriber_to_stream(data, sock);
         } else {
             close(sock);

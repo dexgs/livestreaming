@@ -6,8 +6,15 @@
 #include "authenticator.h"
 #include "srt.h"
 
+// Streams with names beginning with this
+// value will not be listed by the web API
 #ifndef UNLISTED_STREAM_NAME_PREFIX
 #define UNLISTED_STREAM_NAME_PREFIX "_"
+#endif
+
+// Number of buckets in published_stream_map
+#ifndef MAP_SIZE
+#define MAP_SIZE 500
 #endif
 
 // Represents the data related to a single livestream.
