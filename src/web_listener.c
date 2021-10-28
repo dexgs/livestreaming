@@ -14,10 +14,6 @@
 #include "web_subscriber.h"
 #include "web_api.h"
 
-#ifndef WEB_LISTEN_BACKLOG
-#define WEB_LISTEN_BACKLOG 10
-#endif
-
 struct thread_data {
     int sock;
     bool read_web_ip_from_headers;
