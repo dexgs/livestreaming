@@ -138,10 +138,6 @@ void start_srt_listener(
 }
 
 
-#ifndef SRT_LISTEN_BACKLOG
-#define SRT_LISTEN_BACKLOG 4
-#endif
-
 void * run_srt_listener(void * _d) {
     struct thread_data * d = (struct thread_data *) _d;
     SRTSOCKET sock = d->sock;
