@@ -8,7 +8,7 @@
 #include "web_api.h"
 #include "authenticator.h"
 #include "published_stream.h"
-#include "picohttpparser/picohttpparser.h"
+#include "picohttpparser.h"
 
 struct thread_data {
     int sock;

@@ -2,12 +2,14 @@ THIRDPARTY_DIR = ./thirdparty
 
 srt_static = $(THIRDPARTY_DIR)/srt/_build/libsrt.a
 
-LDFLAGS = $(srt_static) -lpthread -lcrypto
-CFLAGS = -Wall -Wextra
+LDFLAGS += $(srt_static) -lpthread -lcrypto
+CFLAGS += -Wall -Wextra
+CFLAGS += -Ithirdparty/srt/srtcore/ -Ithirdparty/srt/_build
+CFLAGS += -Ithirdparty/picohttpparser
 
 .DEFAULT_GOAL := ShaRT
 
-all: srt picohttpparser ShaRT
+all: srt ShaRT
 
 src = $(wildcard src/*.c) \
 	  thirdparty/picohttpparser/picohttpparser.c
@@ -31,15 +33,6 @@ srt:
 	cd _build; \
 	cmake ../ $(SRT_CMAKE_ARGS); \
 	cmake --build ./;
-	
-	@mkdir -p src/$@
-	cp $(THIRDPARTY_DIR)/$@/srtcore/*.h src/$@/
-	cp $(THIRDPARTY_DIR)/$@/_build/*.h src/$@/
-
-.PHONY: picohttpparser
-picohttpparser:
-	@mkdir -p src/$@
-	cp $(THIRDPARTY_DIR)/$@/*.h src/$@/
 
 .PHONY: clean
 clean:

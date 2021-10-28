@@ -2,7 +2,7 @@
 #include <assert.h>
 #include "srt_subscriber.h"
 #include "srt_common.h"
-#include "srt/srt.h"
+#include "srt.h"
 #include "published_stream.h"
 #include "authenticator.h"
 
