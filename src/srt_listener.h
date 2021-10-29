@@ -29,7 +29,7 @@
 #endif
 
 #ifndef ENABLE_TIMESTAMPS
-#define ENABLE_TIMESTAMPS false
+#define ENABLE_TIMESTAMPS true
 #endif
 
 #ifndef ENABLE_REPEATED_LOSS_REPORTS
@@ -37,7 +37,7 @@
 #endif
 
 #ifndef ENABLE_DRIFT_TRACER
-#define ENABLE_DRIFT_TRACER false
+#define ENABLE_DRIFT_TRACER true
 #endif
 
 void start_srt_listeners(
