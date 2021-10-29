@@ -31,6 +31,22 @@ The following values can be defined at compile time:
 - `UNLISTED_STREAM_NAME_PREFIX` : `string` - Streams published under a name
   beginning with this string will not be reported by the web API
   (default value is `_`).
+- `MIN_PACKETS_IN_FLIGHT` : `int`
+  [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_FC)
+- `SEND_BUFFER_SIZE` : `int`
+  [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_SNDBUF)
+- `RECV_BUFFER_SIZE` : `int` [SRT docs]
+  [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_RCVBUF)
+- `OVERHEAD_BW_PERCENT` : `int`
+  [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_OHEADBW)
+- `LATENCY_MS` : `int`
+  [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_LATENCY)
+- `ENABLE_TIMESTAMPS` : `bool`
+  [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_TSBPDMODE)
+- `ENABLE_REPEATED_LOSS_REPORTS` : `bool`
+  [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_NAKREPORT)
+- `ENABLE_DRIFT_TRACER` : `bool`
+  [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_DRIFTTRACER)
 
 ## Usage
 
