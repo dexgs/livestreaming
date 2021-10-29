@@ -49,8 +49,8 @@ with the rate at which data arrives, it will drop connections until it can.
 An example webpage for playing live streams using [mpegts.js](https://github.com/xqq/mpegts.js)
 is provided. To use it, do the following:
 1. Serve the `www` directory with a web server.
-2. Set the values of `stream_backend_url` and `srt_url` to the URLs at which ShaRT is
-  configured to accept HTTP and SRT subscriber connections respectively.
+2. Set the values of `stream_backend_url` and `srt_url` in `www/config.js` to the URLs
+  at which ShaRT is configured to accept HTTP and SRT subscriber connections respectively.
 
 ## Web API
 
