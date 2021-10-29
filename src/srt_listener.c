@@ -58,9 +58,9 @@ void start_srt_listeners(
 void set_sock_flags(SRTSOCKET sock) {
     int set_flag_err;
 
-    int min_fc = MIN_PACKETS_IN_FLIGHT;
-    // Set minimum number of "in-flight packets"
-    set_flag_err = srt_setsockflag(sock, SRTO_FC, &min_fc, sizeof(min_fc));
+    int max_fc = MAX_PACKETS_IN_FLIGHT;
+    // Set maximum number of "in-flight packets"
+    set_flag_err = srt_setsockflag(sock, SRTO_FC, &max_fc, sizeof(max_fc));
     assert(set_flag_err != SRT_ERROR);
 
     int send_buf = SEND_BUFFER_SIZE;
