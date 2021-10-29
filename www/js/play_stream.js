@@ -27,7 +27,7 @@ function playStream() {
     let streamName = streamNameInput.value;
 
     lastStreamURL = streamName;
-    fetch(stream_backend_url + "/api/stream/" + streamName)
+    fetch(web_url + "/api/stream/" + streamName)
     .then(response => {
         if (response.ok) {
             if (player) {
@@ -43,7 +43,7 @@ function playStream() {
                 player = mpegts.createPlayer({
                     type: "m2ts",
                     isLive: true,
-                    url: stream_backend_url + "/stream/" + streamName,
+                    url: web_url + "/stream/" + streamName,
                     lazyLoad: false,
                     enableStashBuffer: enableBufferInput.checked,
                     stashInitialSize: bufferSizeInput.value * 1000

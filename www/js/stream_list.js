@@ -2,7 +2,7 @@ setInterval(getActiveStreams, 5000);
 getActiveStreams();
 
 function getActiveStreams() {
-    fetch(stream_backend_url + "/api/streams/20")
+    fetch(web_url + "/api/streams/20")
     .then(response => {
         if (response.ok) {
             response.json().then(list => showActiveStreams(list));
@@ -40,7 +40,7 @@ function showActiveStreams(list) {
         let srt = clone.querySelector(".srt-link");
         let http = clone.querySelector(".http-link");
 
-        http.href = stream_backend_url + "/stream/" + name;
+        http.href = web_url + "/stream/" + name;
         http.title = http.href;
 
         srt.href = srt_url + "?streamid=" + name;
