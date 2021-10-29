@@ -31,7 +31,7 @@ The following values can be defined at compile time:
 - `UNLISTED_STREAM_NAME_PREFIX` : `string` - Streams published under a name
   beginning with this string will not be reported by the web API
   (default value is `_`).
-- `MIN_PACKETS_IN_FLIGHT` : `int`
+- `MAX_PACKETS_IN_FLIGHT` : `int`
   [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_FC)
 - `SEND_BUFFER_SIZE` : `int`
   [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_SNDBUF)
