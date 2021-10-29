@@ -58,22 +58,26 @@ void start_srt_listeners(
 void set_sock_flags(SRTSOCKET sock) {
     int set_flag_err;
 
-    int min_fc = 1024;
+    int min_fc = MIN_PACKETS_IN_FLIGHT;
     // Set minimum number of "in-flight packets"
     set_flag_err = srt_setsockflag(sock, SRTO_FC, &min_fc, sizeof(min_fc));
     assert(set_flag_err != SRT_ERROR);
 
-    int min_buf = 1490944;
+    int send_buf = SEND_BUFFER_SIZE;
     // Set minimum buffer sizes
-    set_flag_err = srt_setsockflag(sock, SRTO_SNDBUF, &min_buf, sizeof(min_buf));
+    set_flag_err =
+        srt_setsockflag(sock, SRTO_SNDBUF, &send_buf, sizeof(send_buf));
     assert(set_flag_err != SRT_ERROR);
 
-    set_flag_err = srt_setsockflag(sock, SRTO_RCVBUF, &min_buf, sizeof(min_buf));
+    int recv_buf = RECV_BUFFER_SIZE;
+    set_flag_err =
+        srt_setsockflag(sock, SRTO_RCVBUF, &recv_buf, sizeof(recv_buf));
     assert(set_flag_err != SRT_ERROR);
 
-    int overhead_percent = 10;
+    int oh_percent = OVERHEAD_BW_PERCENT;
     // Set overhead to max 10% of bw
-    set_flag_err = srt_setsockflag(sock, SRTO_OHEADBW, &overhead_percent, sizeof(overhead_percent));
+    set_flag_err =
+        srt_setsockflag(sock, SRTO_OHEADBW, &oh_percent, sizeof(oh_percent));
     assert(set_flag_err != SRT_ERROR);
 
     struct linger l = {.l_onoff = 0, .l_linger = 0};
@@ -82,21 +86,26 @@ void set_sock_flags(SRTSOCKET sock) {
     assert(set_flag_err != SRT_ERROR);
 
     // Set latency to zero
-    int z = 0;
-    set_flag_err = srt_setsockflag(sock, SRTO_LATENCY, &z, sizeof(z));
+    int ms = LATENCY_MS;
+    set_flag_err = srt_setsockflag(sock, SRTO_LATENCY, &ms, sizeof(ms));
     assert(set_flag_err != SRT_ERROR);
 
-    bool no = false;
+    bool enable_tsbpd = ENABLE_TIMESTAMPS;
     // Disable timestamps (this means SRT spawn one less thread per connection)
-    set_flag_err = srt_setsockflag(sock, SRTO_TSBPDMODE, &no, sizeof(no));
+    set_flag_err =
+        srt_setsockflag(sock, SRTO_TSBPDMODE, &enable_tsbpd, sizeof(enable_tsbpd));
     assert(set_flag_err != SRT_ERROR);
 
+    bool enable_nakreport = ENABLE_REPEATED_LOSS_REPORTS;
     // Disable repeated loss detection reports
-    set_flag_err = srt_setsockflag(sock, SRTO_NAKREPORT, &no, sizeof(no));
+    set_flag_err =
+        srt_setsockflag(sock, SRTO_NAKREPORT, &enable_nakreport, sizeof(enable_nakreport));
     assert(set_flag_err != SRT_ERROR);
 
+    bool enable_drift = ENABLE_DRIFT_TRACER;
     // Disable drift tracer
-    set_flag_err = srt_setsockflag(sock, SRTO_DRIFTTRACER, &no, sizeof(no));
+    set_flag_err =
+        srt_setsockflag(sock, SRTO_DRIFTTRACER, &enable_drift, sizeof(enable_drift));
     assert(set_flag_err != SRT_ERROR);
 }
 
