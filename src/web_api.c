@@ -62,6 +62,51 @@ struct web_api_data * create_web_api_data() {
 }
 
 
+// Update the active stream list in `data` using the current state of `map`.
+// This function is thread-safe.
+void update_stream_list(
+        struct published_stream_map * map, struct web_api_data * data)
+{
+    if (pthread_mutex_trylock(&data->update_lock) == 0) {
+        int mutex_lock_err;
+        int cond_err;
+
+        unsigned int num_names = 0;
+        char ** names = stream_names(map, &num_names);
+
+        mutex_lock_err = pthread_mutex_unlock(&data->update_lock);
+        assert(mutex_lock_err == 0);
+
+        mutex_lock_err = pthread_mutex_lock(&data->skip_cond_lock);
+        assert(mutex_lock_err == 0);
+
+        // If the last connection finished before we got to this point, `skip_cond`
+        // will be set to true and we know we don't have to wait for the condition
+        // variable to be signalled.
+        while (!data->skip_cond) {
+            cond_err = pthread_cond_wait(&data->names_swap_cond, &data->skip_cond_lock);
+            assert(cond_err == 0);
+        }
+        data->skip_cond = false;
+
+        unsigned int old_num_names = data->num_names;
+        char ** old_names = data->names;
+        data->names = names;
+        data->num_names = num_names;
+
+        mutex_lock_err = pthread_mutex_unlock(&data->skip_cond_lock);
+        assert(mutex_lock_err == 0);
+
+        // Clean up memory
+        for (unsigned int i = 0; i < old_num_names; i++) {
+            free(old_names[i]);
+        }
+        if (old_names != NULL) {
+            free(old_names);
+        }
+    }
+}
+
 // Return list of active streams sorted by number of viewers. The first thread
 // to handle a request in a "group" will lock `update_lock` and generate a new
 // stream list. It will then swap out current stream list with the new one when
@@ -73,10 +118,6 @@ void active_stream_list(
 {
     int mutex_lock_err;
     int cond_err;
-
-    // If no other thread is generating the streams list
-    bool generate_stream_names_list =
-        pthread_mutex_trylock(&data->update_lock) == 0;
 
     mutex_lock_err = pthread_mutex_lock(&data->num_requests_lock);
     assert(mutex_lock_err == 0);
@@ -155,41 +196,7 @@ void active_stream_list(
     mutex_lock_err = pthread_mutex_unlock(&data->num_requests_lock);
     assert(mutex_lock_err == 0);
 
-    if (generate_stream_names_list) {
-        unsigned int num_names = 0;
-        char ** names = stream_names(map, &num_names);
-
-        mutex_lock_err = pthread_mutex_unlock(&data->update_lock);
-        assert(mutex_lock_err == 0);
-
-        mutex_lock_err = pthread_mutex_lock(&data->skip_cond_lock);
-        assert(mutex_lock_err == 0);
-
-        // If the last connection finished before we got to this point, `skip_cond`
-        // will be set to true and we know we don't have to wait for the condition
-        // variable to be signalled.
-        while (!data->skip_cond) {
-            cond_err = pthread_cond_wait(&data->names_swap_cond, &data->skip_cond_lock);
-            assert(cond_err == 0);
-        }
-        data->skip_cond = false;
-
-        unsigned int old_num_names = data->num_names;
-        char ** old_names = data->names;
-        data->names = names;
-        data->num_names = num_names;
-
-        mutex_lock_err = pthread_mutex_unlock(&data->skip_cond_lock);
-        assert(mutex_lock_err == 0);
-
-        // Clean up memory
-        for (unsigned int i = 0; i < old_num_names; i++) {
-            free(old_names[i]);
-        }
-        if (old_names != NULL) {
-            free(old_names);
-        }
-    }
+    update_stream_list(map, data);
 }
 
 
