@@ -35,7 +35,7 @@ The following values can be defined at compile time:
   [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_FC)
 - `SEND_BUFFER_SIZE` : `int`
   [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_SNDBUF)
-- `RECV_BUFFER_SIZE` : `int` [SRT docs]
+- `RECV_BUFFER_SIZE` : `int`
   [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_RCVBUF)
 - `OVERHEAD_BW_PERCENT` : `int`
   [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_OHEADBW)
