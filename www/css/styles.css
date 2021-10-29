@@ -1,12 +1,10 @@
+@import "colours.css";
+
 html {
+    background: var(--bg);
     font-family: sans-serif;
     height: 100%;
-}
-
-@media (prefers-color-scheme: dark) {
-    html {
-        background: #060606;
-    }
+    color: var(--text);
 }
 
 body {
@@ -19,7 +17,7 @@ body {
 }
 
 a {
-    color: dodgerblue;
+    color: var(--accent);
 }
 
 div#content {
@@ -27,24 +25,13 @@ div#content {
 }
 
 h1, h2 {
-    color: dodgerblue;
-}
-
-h1::before {
-    --outline: rgba(255, 255, 255, 0.2);
-    content: "🎥 ";
-    text-shadow: 1px -1px 0 var(--outline),
-                 -1px 1px 0 var(--outline),
-                 -1px 1px 0 var(--outline),
-                 1px -1px 0 var(--outline),
-                 1px 1px 0 var(--outline),
-                 -1px -1px 0 var(--outline);
+    color: var(--accent);
 }
 
 video#stream-player {
     width: 100%;
     background-color: black;
-    border: 1px solid gray;
+    border: 1px solid var(--separator);
 }
 
 form#stream-setup {
@@ -54,6 +41,7 @@ form#stream-setup {
 
 form#stream-setup > fieldset {
     display: flex;
+    flex-wrap: wrap;
     gap: 5px;
     align-items: center;
     padding: 5px 0;
@@ -77,21 +65,14 @@ form#stream-setup output {
 span.info {
     display: inline-block;
     font-size: 13pt;
-    width: 20px;
+    min-width: 20px;
     height: 20px;
-    color: #555;
     font-weight: normal;
-    border: 1px solid gray;
+    border: 1px solid var(--text-fainter);
     border-radius: 50%;
     line-height: 18px;
     text-align: center;
     cursor: help;
-}
-
-@media (prefers-color-scheme: dark) {
-    form#stream-setup label, form#stream-setup output, form#stream-setup span.info {
-        color: lightgray;
-    }
 }
 
 form#stream-setup * {
@@ -101,7 +82,7 @@ form#stream-setup * {
 p.instructions {
     width: 100%;
     text-align: center;
-    color: gray;
+    color: var(--text-faint);
 }
 
 div#stream-list-container {
@@ -131,7 +112,7 @@ div#stream-list-container {
         max-width: unset;
 
         direction: ltr;
-        border-top: 1px solid lightgray;
+        border-top: 1px solid var(--separator-faint);
     }
 }
 
@@ -175,6 +156,6 @@ ul#stream-list * {
 footer {
     text-align: center;
     font-size: 10pt;
-    color: gray;
+    color: var(--text-faint);
     padding: 10px;
 }

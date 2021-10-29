@@ -1,0 +1,17 @@
+:root {
+    --bg: white;
+    --accent: dodgerblue;
+    --text: black;
+    --text-faint: gray;
+    --text-fainter: lightgray;
+    --separator: rgba(100, 100, 100, 0.5);
+    --separator-faint: rgba(170, 170, 170, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #060606;
+        --text: lightgray;
+        --text-fainter: #555;
+    }
+}
