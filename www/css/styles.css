@@ -63,6 +63,7 @@ form#stream-setup output {
 }
 
 span.info {
+    color: var(--text);
     display: inline-block;
     font-size: 13pt;
     min-width: 20px;
