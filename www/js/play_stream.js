@@ -45,6 +45,9 @@ function playStream() {
                     isLive: true,
                     url: web_url + "/stream/" + streamName,
                     lazyLoad: false,
+                    liveBufferLatencyChasing: true,
+                    liveBufferLatencyMinRemain: 0.0,
+                    enableWorker: true,
                     enableStashBuffer: enableBufferInput.checked,
                     stashInitialSize: bufferSizeInput.value * 1000
                 });
