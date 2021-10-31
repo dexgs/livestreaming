@@ -43,3 +43,16 @@ srt:
 clean:
 	rm -rf $(obj) test/test.o bin
 	rm -rf $(THIRDPARTY_DIR)/srt/_build
+
+ifeq ($(PREFIX),)
+	PREFIX := /usr
+endif
+
+.PHONY: install
+install: bin/ShaRT
+	install -d $(DESTDIR)$(PREFIX)/bin
+	cp $< $(DESTDIR)$(PREFIX)/bin/ShaRT
+
+.PHONY: uninstall
+uninstall:
+	rm -f $(DESTDIR)$(PREFIX)/bin/ShaRT
