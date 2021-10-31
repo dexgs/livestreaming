@@ -87,7 +87,7 @@ void * run_web_listener(void * _d) {
 
     unsigned int client_addr_len = sizeof(client_addr);
 
-    struct timeval timeout = { .tv_sec = 0, .tv_usec = 10000 };
+    struct timeval timeout = { .tv_sec = 0, .tv_usec = 500000 };
 
     while (true) {
         int client_sock = accept(
