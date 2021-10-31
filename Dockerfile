@@ -34,10 +34,10 @@ ARG CFLAGS="-O3\
             -DENABLE_DRIFT_TRACER=$ENABLE_DRIFT_TRACER"
             RUN make NDEBUG=1 all
 
-            USER nobody
-            CMD bin/ShaRT --srt-publish-passphrase "$SRT_PUBLISH_PASSPHRASE" \
-                --srt-subscribe-passphrase "$SRT_SUBSCRIBE_PASSPHRASE" \
-                --max-subscribers "$MAX_SUBSCRIBERS" \
-                --max-pending-connections "$MAX_PENDING_CONNECTIONS" \
-                --auth-command "$AUTH_COMMAND" \
-                --read-web-ip-from-headers "$READ_WEB_IP_FROM_HEADERS"
+USER nobody
+CMD bin/ShaRT --srt-publish-passphrase "$SRT_PUBLISH_PASSPHRASE" \
+              --srt-subscribe-passphrase "$SRT_SUBSCRIBE_PASSPHRASE" \
+              --max-subscribers "$MAX_SUBSCRIBERS" \
+              --max-pending-connections "$MAX_PENDING_CONNECTIONS" \
+              --auth-command "$AUTH_COMMAND" \
+              --read-web-ip-from-headers "$READ_WEB_IP_FROM_HEADERS"
