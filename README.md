@@ -65,7 +65,7 @@ settings as well as others, modify the relevant values in `docker-compose.yml`.
 
 ### Build and run container WITHOUT Lighttpd
 
-Run `docker-compose build shart && docker-compose up shart`.
+Run `docker-compose build shart && docker-compose up shart`
 
 ShaRT will listen for SRT publishers on port `9991` and SRT subscribers on port `1234`.
 To change these settings as well as others, modify the relevant values in `docker-compose.yml`.
