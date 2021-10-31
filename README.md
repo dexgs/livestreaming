@@ -48,6 +48,28 @@ The following values can be defined at compile time:
 - `ENABLE_DRIFT_TRACER` : `bool`
   [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_DRIFTTRACER)
 
+## Docker
+
+A configuration to run ShaRT under Docker is provided. By default, it includes an instance of
+[Lighttpd](https://www.lighttpd.net/) to serve the web interface.
+
+### Build and run container WITH Lighttpd
+
+Run `HOSTNAME=your-hostname docker-compose build && docker-compose up` where
+`your-hostname` is replaced with the hostname at which the web interface will be reachable
+by an end-user (NOT the address at which it is reachable on the local machine).
+
+The web player will be accessible at `your-hostname:3000` and ShaRT will listen for
+SRT publishers on port `9991` and SRT subscribers on port `1234`. To change these
+settings as well as others, modify the relevant values in `docker-compose.yml`.
+
+### Build and run container WITHOUT Lighttpd
+
+Run `docker-compose build shart && docker-compose up shart`.
+
+ShaRT will listen for SRT publishers on port `9991` and SRT subscribers on port `1234`.
+To change these settings as well as others, modify the relevant values in `docker-compose.yml`.
+
 ## Usage
 
 See [USAGE.md](USAGE.md)
