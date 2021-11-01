@@ -110,6 +110,14 @@ void * run_web_listener(void * _d) {
             continue;
         }
 
+        int buf_len = WEB_SEND_BUFFER_SIZE;
+        set_sock_opt_err = setsockopt(
+                client_sock, SOL_SOCKET, SO_SNDBUF, &buf_len, sizeof(buf_len));
+        if (set_sock_opt_err != 0) {
+            close(client_sock);
+            continue;
+        }
+
         if (max_pending_connections_exceeded(auth)) {
             close(client_sock);
         } else {
