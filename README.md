@@ -47,6 +47,8 @@ The following values can be defined at compile time:
   [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_NAKREPORT)
 - `ENABLE_DRIFT_TRACER` : `bool`
   [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_DRIFTTRACER)
+- `WEB_SEND_BUFFER_SIZE` : `int` - Like `SEND_BUFFER_SIZE`, but for HTTP
+  connections.
 
 ## Docker
 
