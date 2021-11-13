@@ -94,8 +94,7 @@ div#stream-list-container {
     max-height: 100%;
     margin-left: 20px;
 
-    min-width: 260px;
-    max-width: calc((100% - 20cm - 80px) / 2);
+    max-width: calc(50% - 10cm - 40px);
 
     /* Put scrollbar on left side */
     direction: rtl;
