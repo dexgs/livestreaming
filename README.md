@@ -123,3 +123,4 @@ The following HTTP endpoints are exposed:
   returned.
 - `/api/stream/NAME` Returns the number of viewers for `NAME`. Returns `404` if
   there is no stream called `NAME` being published.
+- `/stream/NAME` This is the HTTP endpoint for serving MPEG-TS encoded streams.

@@ -1,7 +1,7 @@
 version: '3.9'
 services:
   shart:
-    image: shart:1.2.1
+    image: shart:1.2.3
     ports:
       - "${SRT_PUBLISH_PORT:-9991}:9991/udp"
       - "${SRT_SUBSCRIBE_PORT:-1234}:1234/udp"
