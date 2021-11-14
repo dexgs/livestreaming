@@ -147,6 +147,7 @@ ul#stream-list > li > a {
     border-radius: 3px;
     padding: 2px 3px;
     text-decoration: none;
+    flex-shrink: 0;
 }
 
 ul#stream-list * {
