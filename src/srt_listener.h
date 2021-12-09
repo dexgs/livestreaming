@@ -5,23 +5,23 @@
 #include "published_stream.h"
 
 #ifndef SRT_LISTEN_BACKLOG
-#define SRT_LISTEN_BACKLOG 4
+#define SRT_LISTEN_BACKLOG 10
 #endif
 
 #ifndef MAX_PACKETS_IN_FLIGHT
-#define MAX_PACKETS_IN_FLIGHT 1024
+#define MAX_PACKETS_IN_FLIGHT 2048
 #endif
 
 #ifndef SEND_BUFFER_SIZE
-#define SEND_BUFFER_SIZE 1490944
+#define SEND_BUFFER_SIZE 1500000
 #endif
 
 #ifndef RECV_BUFFER_SIZE
-#define RECV_BUFFER_SIZE 1490944
+#define RECV_BUFFER_SIZE 1500000
 #endif
 
 #ifndef OVERHEAD_BW_PERCENT
-#define OVERHEAD_BW_PERCENT 10
+#define OVERHEAD_BW_PERCENT 25
 #endif
 
 #ifndef LATENCY_MS
@@ -29,15 +29,15 @@
 #endif
 
 #ifndef ENABLE_TIMESTAMPS
-#define ENABLE_TIMESTAMPS true
+#define ENABLE_TIMESTAMPS false
 #endif
 
 #ifndef ENABLE_REPEATED_LOSS_REPORTS
-#define ENABLE_REPEATED_LOSS_REPORTS false
+#define ENABLE_REPEATED_LOSS_REPORTS true
 #endif
 
 #ifndef ENABLE_DRIFT_TRACER
-#define ENABLE_DRIFT_TRACER true
+#define ENABLE_DRIFT_TRACER false
 #endif
 
 void start_srt_listeners(

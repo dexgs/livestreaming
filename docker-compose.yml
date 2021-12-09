@@ -1,7 +1,7 @@
 version: '3.9'
 services:
   shart:
-    image: shart:1.2.3
+    image: shart:1.2.4
     ports:
       - "${SRT_PUBLISH_PORT:-9991}:9991/udp"
       - "${SRT_SUBSCRIBE_PORT:-1234}:1234/udp"
@@ -25,17 +25,17 @@ services:
         # Everything below this line should only be changed if you know what
         # you're doing.
         - WEB_LISTEN_BACKLOG=10
-        - SRT_LISTEN_BACKLOG=4
+        - SRT_LISTEN_BACKLOG=10
         - MAP_SIZE=500
         - MAX_PACKETS_IN_FLIGHT=1024
-        - SEND_BUFFER_SIZE=1490944
-        - RECV_BUFFER_SIZE=1490944
-        - WEB_SEND_BUFFER_SIZE=1490944
-        - OVERHEAD_BW_PERCENT=10
+        - SEND_BUFFER_SIZE=1500000
+        - RECV_BUFFER_SIZE=1500000
+        - WEB_SEND_BUFFER_SIZE=1500000
+        - OVERHEAD_BW_PERCENT=25
         - LATENCY_MS=0
-        - ENABLE_TIMESTAMPS=true
-        - ENABLE_REPEATED_LOSS_REPORTS=false
-        - ENABLE_DRIFT_TRACER=true
+        - ENABLE_TIMESTAMPS=false
+        - ENABLE_REPEATED_LOSS_REPORTS=true
+        - ENABLE_DRIFT_TRACER=false
   lighttpd:
     ports:
       - "${LIGHTTPD_PORT:-3000}:80"
