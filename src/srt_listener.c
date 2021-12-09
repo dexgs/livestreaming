@@ -75,7 +75,7 @@ void set_sock_flags(SRTSOCKET sock) {
     assert(set_flag_err != SRT_ERROR);
 
     int oh_percent = OVERHEAD_BW_PERCENT;
-    // Set overhead to max 10% of bw
+    // Set what percentage of bandwidth is allowed to be used for overhead
     set_flag_err =
         srt_setsockflag(sock, SRTO_OHEADBW, &oh_percent, sizeof(oh_percent));
     assert(set_flag_err != SRT_ERROR);
@@ -85,25 +85,25 @@ void set_sock_flags(SRTSOCKET sock) {
     set_flag_err = srt_setsockflag(sock, SRTO_LINGER, &l, sizeof(l));
     assert(set_flag_err != SRT_ERROR);
 
-    // Set latency to zero
+    // Set latency
     int ms = LATENCY_MS;
     set_flag_err = srt_setsockflag(sock, SRTO_LATENCY, &ms, sizeof(ms));
     assert(set_flag_err != SRT_ERROR);
 
     bool enable_tsbpd = ENABLE_TIMESTAMPS;
-    // Disable timestamps (this means SRT spawn one less thread per connection)
+    // Set timestamps toggle
     set_flag_err =
         srt_setsockflag(sock, SRTO_TSBPDMODE, &enable_tsbpd, sizeof(enable_tsbpd));
     assert(set_flag_err != SRT_ERROR);
 
     bool enable_nakreport = ENABLE_REPEATED_LOSS_REPORTS;
-    // Disable repeated loss detection reports
+    // Set repeated loss detection reports toggle
     set_flag_err =
         srt_setsockflag(sock, SRTO_NAKREPORT, &enable_nakreport, sizeof(enable_nakreport));
     assert(set_flag_err != SRT_ERROR);
 
     bool enable_drift = ENABLE_DRIFT_TRACER;
-    // Disable drift tracer
+    // Set drift tracer toggle
     set_flag_err =
         srt_setsockflag(sock, SRTO_DRIFTTRACER, &enable_drift, sizeof(enable_drift));
     assert(set_flag_err != SRT_ERROR);
