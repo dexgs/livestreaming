@@ -1,7 +1,7 @@
 version: '3.9'
 services:
   shart:
-    image: shart:1.2.4
+    image: shart:1.2.5
     ports:
       - "${SRT_PUBLISH_PORT:-9991}:9991/udp"
       - "${SRT_SUBSCRIBE_PORT:-1234}:1234/udp"
@@ -32,10 +32,10 @@ services:
         - RECV_BUFFER_SIZE=1500000
         - WEB_SEND_BUFFER_SIZE=1500000
         - OVERHEAD_BW_PERCENT=25
-        - LATENCY_MS=0
-        - ENABLE_TIMESTAMPS=false
+        - LATENCY_MS=60
+        - ENABLE_TIMESTAMPS=true
         - ENABLE_REPEATED_LOSS_REPORTS=true
-        - ENABLE_DRIFT_TRACER=false
+        - ENABLE_DRIFT_TRACER=true
   lighttpd:
     ports:
       - "${LIGHTTPD_PORT:-3000}:80"
