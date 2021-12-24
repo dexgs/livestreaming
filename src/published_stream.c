@@ -275,6 +275,21 @@ bool stream_name_in_map(struct published_stream_map * map, const char * name) {
 }
 
 
+unsigned int num_streams(struct published_stream_map * map) {
+    int mutex_lock_err;
+
+    mutex_lock_err = pthread_mutex_lock(&map->map_lock);
+    assert(mutex_lock_err == 0);
+
+    unsigned int num_streams = map->num_publishers;
+
+    mutex_lock_err = pthread_mutex_unlock(&map->map_lock);
+    assert(mutex_lock_err == 0);
+
+    return num_streams;
+}
+
+
 struct stream_info {
     char * name;
     unsigned int num_subscribers;
