@@ -150,7 +150,7 @@ void active_stream_list(
 
     // If the current number of streams is 0, make sure an empty list gets
     // returned by preventing the body of the for loop below from running.
-    if (num_streams(map) == 0) {
+    if (num_published_streams(map) == 0) {
         num_streams = 0;
     } else if (num_streams == 0) {
         // If num_streams was not set, return the full list of stream names.
