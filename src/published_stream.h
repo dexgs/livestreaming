@@ -102,7 +102,7 @@ char ** stream_names(
         struct published_stream_map * map, unsigned int * num_streams);
 
 // Return the number of published streams. This function is thread-safe.
-unsigned int num_streams(struct published_stream_map * map);
+unsigned int num_published_streams(struct published_stream_map * map);
 
 // `*name` and `addr` should be heap allocated.
 struct published_stream_data * add_stream_to_map(
