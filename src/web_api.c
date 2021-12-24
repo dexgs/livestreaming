@@ -157,7 +157,7 @@ void active_stream_list(
         num_streams = data->num_names;
     }
 
-    char * size_str = malloc(sizeof(unsigned int));
+    char * size_str = malloc(16);
 
     for (unsigned int i = 0; i < data->num_names && i < num_streams; i++) {
         bool is_last_name = i + 1 >= data->num_names || i + 1 >= num_streams;
@@ -165,7 +165,7 @@ void active_stream_list(
         size_t chunk_size = strlen(data->names[i]) + 2;
         if (!is_last_name) chunk_size++;
 
-        snprintf(size_str, sizeof(unsigned int), "%lx", chunk_size);
+        snprintf(size_str, 16, "%lx", chunk_size);
         write(sock, size_str, strlen(size_str));
         write(sock, "\r\n", 2);
         write(sock, "\"", 1);
@@ -230,8 +230,8 @@ void single_stream_data(
 
         write(sock, HTTP_CONTENT_LENGTH, strlen(HTTP_CONTENT_LENGTH));
 
-        char * str_len_str = malloc(sizeof(unsigned int));
-        snprintf(str_len_str, sizeof(unsigned int), "%lx", str_len);
+        char * str_len_str = malloc(16);
+        snprintf(str_len_str, 16, "%lx", str_len);
 
         write(sock, str_len_str, strlen(str_len_str));
         write(sock, "\r\n\r\n", 4);
@@ -279,4 +279,12 @@ void web_api(
     }
 
     close(sock);
+}
+
+
+void update_stream_list_timer(struct published_stream_map * map, struct web_api_data * data) {
+    while (true) {
+        update_stream_list(map, data);
+        sleep(30);
+    }
 }

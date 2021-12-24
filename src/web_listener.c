@@ -20,6 +20,7 @@ struct thread_data {
     struct authenticator * auth;
     struct published_stream_map * map;
     struct sockaddr_in addr;
+    struct web_api_data * data;
 };
 
 void * run_web_listener(void * _d);
@@ -63,6 +64,7 @@ void start_web_listener(
     d->auth = auth;
     d->map = map;
     d->addr = addr;
+    d->data = create_web_api_data();
 
     pthread_t thread_handle;
     int pthread_err;
@@ -74,6 +76,19 @@ void start_web_listener(
     assert(pthread_err == 0);
 }
 
+
+void * run_update_stream_list_timer(void * _d) {
+    struct thread_data * d = (struct thread_data *) _d;
+    struct published_stream_map * map = d->map;
+    struct web_api_data * data = d->data;
+    free(d);
+
+    update_stream_list_timer(map, data);
+
+    return NULL;
+}
+
+
 void * run_web_listener(void * _d) {
     struct thread_data * d = (struct thread_data *) _d;
     int sock = d->sock;
@@ -81,9 +96,17 @@ void * run_web_listener(void * _d) {
     struct authenticator * auth = d->auth;
     struct published_stream_map * map = d->map;
     struct sockaddr_in client_addr = d->addr;
-    free(d);
+    struct web_api_data * data = d->data;
 
-    struct web_api_data * data = create_web_api_data();
+    pthread_t thread_handle;
+    int pthread_err;
+
+    pthread_err = pthread_create(&thread_handle, NULL, run_update_stream_list_timer, d);
+    assert(pthread_err == 0);
+
+    pthread_err = pthread_detach(thread_handle);
+    assert(pthread_err == 0);
+
 
     unsigned int client_addr_len = sizeof(client_addr);
 
