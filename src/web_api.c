@@ -74,9 +74,6 @@ void update_stream_list(
         unsigned int num_names = 0;
         char ** names = stream_names(map, &num_names);
 
-        mutex_lock_err = pthread_mutex_unlock(&data->update_lock);
-        assert(mutex_lock_err == 0);
-
         mutex_lock_err = pthread_mutex_lock(&data->skip_cond_lock);
         assert(mutex_lock_err == 0);
 
@@ -93,6 +90,9 @@ void update_stream_list(
         char ** old_names = data->names;
         data->names = names;
         data->num_names = num_names;
+
+        mutex_lock_err = pthread_mutex_unlock(&data->update_lock);
+        assert(mutex_lock_err == 0);
 
         mutex_lock_err = pthread_mutex_unlock(&data->skip_cond_lock);
         assert(mutex_lock_err == 0);
