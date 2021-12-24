@@ -148,8 +148,17 @@ void active_stream_list(
 
     write(sock, "1\r\n[\r\n", 6);
 
+    // If the current number of streams is 0, make sure an empty list gets
+    // returned by preventing the body of the for loop below from running.
+    if (num_streams(map) == 0) {
+        num_streams = 0;
+    } else if (num_streams == 0) {
+        // If num_streams was not set, return the full list of stream names.
+        num_streams = data->num_names;
+    }
+
     char * size_str = malloc(10);
-    if (num_streams == 0) num_streams = data->num_names;
+
     for (unsigned int i = 0; i < data->num_names && i < num_streams; i++) {
         bool is_last_name = i + 1 >= data->num_names || i + 1 >= num_streams;
 
