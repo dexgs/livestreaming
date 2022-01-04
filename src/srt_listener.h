@@ -9,7 +9,7 @@
 #endif
 
 #ifndef MAX_PACKETS_IN_FLIGHT
-#define MAX_PACKETS_IN_FLIGHT 2048
+#define MAX_PACKETS_IN_FLIGHT 25600
 #endif
 
 #ifndef SEND_BUFFER_SIZE
