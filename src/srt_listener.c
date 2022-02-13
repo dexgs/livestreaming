@@ -107,6 +107,16 @@ void set_sock_flags(SRTSOCKET sock) {
     set_flag_err =
         srt_setsockflag(sock, SRTO_DRIFTTRACER, &enable_drift, sizeof(enable_drift));
     assert(set_flag_err != SRT_ERROR);
+
+    bool send_syn = !SRT_SEND_NONBLOCKING;
+    set_flag_err =
+        srt_setsockflag(sock, SRTO_SNDSYN, &send_syn, sizeof(send_syn));
+    assert(set_flag_err != SRT_ERROR);
+
+    bool recv_syn = !SRT_RECV_NONBLOCKING;
+    set_flag_err =
+        srt_setsockflag(sock, SRTO_RCVSYN, &recv_syn, sizeof(recv_syn));
+    assert(set_flag_err != SRT_ERROR);
 }
 
 
