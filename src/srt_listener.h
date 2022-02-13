@@ -41,7 +41,7 @@
 #endif
 
 #ifndef SRT_SEND_NONBLOCKING
-#define SRT_SEND_NONBLOCKING true
+#define SRT_SEND_NONBLOCKING false
 #endif
 
 #ifndef SRT_RECV_NONBLOCKING
