@@ -40,6 +40,14 @@
 #define ENABLE_DRIFT_TRACER true
 #endif
 
+#ifndef SRT_SEND_NONBLOCKING
+#define SRT_SEND_NONBLOCKING true
+#endif
+
+#ifndef SRT_RECV_NONBLOCKING
+#define SRT_RECV_NONBLOCKING true
+#endif
+
 void start_srt_listeners(
         unsigned short publish_port, unsigned short subscribe_port,
         char * publish_passphrase, char * subscribe_passphrase,
