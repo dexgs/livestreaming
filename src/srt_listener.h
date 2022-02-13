@@ -45,7 +45,7 @@
 #endif
 
 #ifndef SRT_RECV_NONBLOCKING
-#define SRT_RECV_NONBLOCKING true
+#define SRT_RECV_NONBLOCKING false
 #endif
 
 void start_srt_listeners(
