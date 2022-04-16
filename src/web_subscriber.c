@@ -117,10 +117,10 @@ void * run_web_subscriber(void * _d) {
         }
 
         if (read_web_ip_from_headers) {
-            // Parse IP from X-Forwarded-For header
+            // Parse IP from "X-Real-IP" header
             for (size_t i = 0; i < num_headers; i++) {
                 if (strncmp(
-                            "X-Forwarded-For", headers[i].name,
+                            "X-Real-IP", headers[i].name,
                             headers[i].name_len) == 0) 
                 {
                     char * header_addr = 
