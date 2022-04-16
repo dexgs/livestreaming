@@ -66,8 +66,8 @@ ShaRT accepts the following command line arguments:
 
 
 #### `--read-web-ip-from-headers y|n`
-- If `y` is passed, the server will read the value of the `X-Forwarded-For`
-    header on HTTP requests and use that as the effective IP address of incoming
+- If `y` is passed, the server will read the value of the `X-Real-IP` header on
+    HTTP requests and use that as the effective IP address of incoming
     connections.
 - Use this if you are running behind a proxy and still want to use IP addresses
     with `--auth-command`.
