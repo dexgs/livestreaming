@@ -284,7 +284,14 @@ void web_api(
 
 void update_stream_list_timer(struct published_stream_map * map, struct web_api_data * data) {
     while (true) {
+        if (pthread_mutex_trylock(&data->skip_cond_lock) == 0) {
+            data->skip_cond = true;
+
+            assert(pthread_mutex_unlock(&data->skip_cond_lock) == 0);
+        }
+
         update_stream_list(map, data);
+
         sleep(30);
     }
 }
