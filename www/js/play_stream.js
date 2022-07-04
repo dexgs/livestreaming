@@ -19,13 +19,11 @@ function setup() {
 var lastStreamURL = "";
 function startPlayer() {
     if (streamNameInput.value != lastStreamURL) {
-        playStream();
+        playStream(streamNameInput.value);
     }
 }
 
-function playStream() {
-    let streamName = streamNameInput.value;
-
+function playStream(streamName) {
     lastStreamURL = streamName;
     fetch(web_url + "/api/stream/" + streamName)
     .then(response => {
@@ -51,6 +49,7 @@ function playStream() {
                     enableStashBuffer: enableBufferInput.checked,
                     stashInitialSize: bufferSizeInput.value * 1000
                 });
+                player.on(mpegts.Events.ERROR, playStream(streamName));
                 player.attachMediaElement(videoElement);
                 player.load();
                 player.play();
