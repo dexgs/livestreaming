@@ -17,7 +17,9 @@ function setup() {
 }
 
 function startPlayer(e) {
-    e.preventDefault();
+    if (typeof e != typeof undefined) {
+        e.preventDefault();
+    }
     playStream(streamNameInput.value);
 }
 
