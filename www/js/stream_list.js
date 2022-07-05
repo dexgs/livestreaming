@@ -50,7 +50,7 @@ function showActiveStreams(list) {
         button.title = "Watch " + name;
         button.onclick = () => {
             streamNameInput.value = name;
-            playStream();
+            playStream(name);
         };
         streamList.appendChild(clone);
     });

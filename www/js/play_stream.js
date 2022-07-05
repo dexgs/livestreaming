@@ -11,20 +11,17 @@ function setup() {
     let hash = window.location.hash;
     streamNameInput.value = decodeURI(hash.substring(1, hash.length));
     let form = document.getElementById("stream-setup");
-    form.onsubmit = playStream;
+    form.onsubmit = startPlayer;
     let bufferSizeInput = document.getElementById("buffer-size");
     bufferSizeInput.nextElementSibling.value = bufferSizeInput.value + "kB";
 }
 
-var lastStreamURL = "";
-function startPlayer() {
-    if (streamNameInput.value != lastStreamURL) {
-        playStream(streamNameInput.value);
-    }
+function startPlayer(e) {
+    e.preventDefault();
+    playStream(streamNameInput.value);
 }
 
 function playStream(streamName) {
-    lastStreamURL = streamName;
     fetch(web_url + "/api/stream/" + streamName)
     .then(response => {
         if (response.ok) {
@@ -49,7 +46,9 @@ function playStream(streamName) {
                     enableStashBuffer: enableBufferInput.checked,
                     stashInitialSize: bufferSizeInput.value * 1000
                 });
-                player.on(mpegts.Events.ERROR, playStream(streamName));
+                player.on(mpegts.Events.ERROR, () => {
+                    playStream(streamName)
+                });
                 player.attachMediaElement(videoElement);
                 player.load();
                 player.play();
@@ -57,6 +56,4 @@ function playStream(streamName) {
         } else {
         }
     });
-
-    return false;
 }
