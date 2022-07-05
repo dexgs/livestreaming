@@ -90,9 +90,9 @@ p.instructions {
 div#stream-list-container {
     position: fixed;
     top: 0;
-    left: 0;
+    right: calc(50% + 10cm);
     max-height: 100%;
-    margin-left: 20px;
+    margin-right: 20px;
 
     max-width: calc(50% - 10cm - 40px);
 
