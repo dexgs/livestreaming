@@ -30,6 +30,7 @@ void * srt_publisher(void * _d) {
     char buf[SRT_BUFFER_SIZE];
     int mutex_lock_err;
     int bytes_read = 0;
+    int inorder = 0;
 
     char hex[12];
 
@@ -42,7 +43,7 @@ void * srt_publisher(void * _d) {
 
         struct srt_subscriber_node * srt_node = data->srt_subscribers;
         while (srt_node != NULL) {
-            send_err = srt_sendmsg(srt_node->sock, buf, bytes_read, 0, false);
+            send_err = srt_sendmsg(srt_node->sock, buf, bytes_read, -1, inorder);
             struct srt_subscriber_node * next_node = srt_node->next;
 
             // If sending failed, remove the subscriber
@@ -82,7 +83,9 @@ void * srt_publisher(void * _d) {
         assert(mutex_lock_err == 0);
 
         // Fill buffer with new data
-        bytes_read = srt_recv(sock, buf, SRT_BUFFER_SIZE);
+        SRT_MSGCTRL mctrl;
+        bytes_read = srt_recvmsg2(sock, buf, SRT_BUFFER_SIZE, &mctrl);
+        inorder = mctrl.inorder;
     }
 
     printf("`%s` stopped publishing `%s`\n", addr, name);
