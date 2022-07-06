@@ -27,12 +27,12 @@ void * srt_publisher(void * _d) {
 
     printf("`%s` started publishing `%s`\n", addr, name);
 
-    char buf[SRT_BUFFER_SIZE];
+    char buf[SRT_BUFFER_SIZE] = {0};
     int mutex_lock_err;
     int bytes_read = 0;
     int inorder = 0;
 
-    char hex[12];
+    char hex[12] = {0};
 
     while (bytes_read != SRT_ERROR) {
         int send_err;
