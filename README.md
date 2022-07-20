@@ -2,8 +2,6 @@
 
 ShaRT is a live-streaming server which ingests over SRT and broadcasts over
 SRT and HTTP licensed under the GPLv3.
-It is the suck-ccessor to
-[diarrhea](https://git.extremelycorporate.ca/chili-b/diarrhea)
 
 ## Dependencies
 
