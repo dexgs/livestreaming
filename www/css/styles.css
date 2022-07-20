@@ -18,15 +18,11 @@ body {
 }
 
 a {
-    color: var(--accent);
+    color: var(--link);
 }
 
 div#content {
     flex-grow: 1;
-}
-
-h1, h2 {
-    color: var(--accent);
 }
 
 video#stream-player {
