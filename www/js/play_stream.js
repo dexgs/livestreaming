@@ -4,6 +4,7 @@ var player;
 
 const streamNameInput = document.getElementById("stream-name");
 const streamPlayer = document.getElementById("stream-player");
+const enableWorkerInput = document.getElementById("enable-worker");
 const enableBufferInput = document.getElementById("enable-buffer");
 const bufferSizeInput = document.getElementById("buffer-size");
 
@@ -44,7 +45,7 @@ function playStream(streamName) {
                     lazyLoad: false,
                     liveBufferLatencyChasing: true,
                     liveBufferLatencyMinRemain: 0.0,
-                    enableWorker: true,
+                    enableWorker: enableWorkerInput.checked,
                     enableStashBuffer: enableBufferInput.checked,
                     stashInitialSize: bufferSizeInput.value * 1000
                 });
