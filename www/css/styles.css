@@ -47,7 +47,7 @@ form#stream-setup > fieldset {
 
 form#stream-setup input#stream-name {
     flex-grow: 1;
-    min-width: 0;
+    width: 100px;
 }
 
 form#stream-setup input#buffer-size {
