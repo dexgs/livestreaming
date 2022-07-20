@@ -56,6 +56,7 @@ form#stream-setup input#stream-name {
 
 form#stream-setup input#buffer-size {
     flex-grow: 1;
+    width: 100px;
 }
 
 form#stream-setup output {
