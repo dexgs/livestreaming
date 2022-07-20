@@ -1,6 +1,7 @@
 h1#title::before {
     --outline: rgba(255, 255, 255, 0.4);
-    content: "🎥 ";
+    color: var(--live-symbol);
+    content: "&#9679; ";
     text-shadow: 1px -1px 0 var(--outline),
                  -1px 1px 0 var(--outline),
                  -1px 1px 0 var(--outline),

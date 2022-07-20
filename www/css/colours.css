@@ -1,6 +1,7 @@
 :root {
     --bg: white;
-    --accent: dodgerblue;
+    --live-symbol: red;
+    --link: dodgerblue;
     --text: black;
     --text-faint: gray;
     --text-fainter: lightgray;
