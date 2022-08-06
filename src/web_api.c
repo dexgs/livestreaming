@@ -17,13 +17,22 @@ const char * HTTP_CONTENT_LENGTH = "Content-Length: ";
 
 const char * HTTP_CHUNKED_ENCODING = "Transfer-Encoding: chunked\r\n";
 
+const char * HTTP_400 =
+    "HTTP/1.1 400 Bad Request\r\n"
+    "Access-Control-Allow-Origin: *\r\n"
+    "Content-Type: text/plain\r\n"
+    "Content-Length: 21\r\n"
+    "Connection: close\r\n\r\n"
+    "Invalid API endpoint.";
+
 const char * HTTP_404 =
     "HTTP/1.1 404 Not Found\r\n"
     "Access-Control-Allow-Origin: *\r\n"
     "Content-Type: text/plain\r\n"
-    "Content-Length: 15\r\n"
+    "Content-Length: 10\r\n"
     "Connection: close\r\n\r\n"
-    "404 - Not Found";
+    "Not Found.";
+
 
 
 struct web_api_data {
@@ -274,8 +283,7 @@ void web_api(
         unsigned int num_streams = strtoul(path, NULL, 10);
         active_stream_list(map, data, num_streams, sock);
     } else {
-        write(sock, HTTP_404, strlen(HTTP_404));
-        close(sock);
+        write(sock, HTTP_400, strlen(HTTP_400));
     }
 
     close(sock);

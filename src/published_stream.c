@@ -617,11 +617,19 @@ void add_srt_subscriber(
     }
 }
 
-const char * WEB_SUBSCRIBER_RESPONSE = 
+const char * WEB_SUBSCRIBER_OK = 
     "HTTP/1.1 200 OK\r\n"
     "Access-Control-Allow-Origin: *\r\n"
     "Content-Type: video/mp2t\r\n"
     "Transfer-Encoding: chunked\r\n\r\n";
+
+const char * WEB_SUBSCRIBER_NOT_FOUND =
+    "HTTP/1.1 404 Not Found\r\n"
+    "Access-Control-Allow-Origin: *\r\n"
+    "Content-Type: text/plain\r\n"
+    "Content-Length: 48\r\n"
+    "Connection: close\r\n\r\n"
+    "There is currently no active stream at this URL.";
 
 void add_web_subscriber(
         struct published_stream_map * map,
@@ -631,6 +639,7 @@ void add_web_subscriber(
         add_subscriber_common(map, auth, name, addr);
 
     if (data == NULL) {
+        write(sock, WEB_SUBSCRIBER_NOT_FOUND, strlen(WEB_SUBSCRIBER_NOT_FOUND));
         close(sock);
     } else {
         // Send data as soon as possible to reduce latency
@@ -638,16 +647,16 @@ void add_web_subscriber(
         int set_opt_err =
             setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *) &yes, sizeof(yes));
 
-        write(sock, WEB_SUBSCRIBER_RESPONSE, strlen(WEB_SUBSCRIBER_RESPONSE));
-
         // Set socket to nonblocking mode
         int set_access_mode_err = fcntl(sock, F_SETFL, O_NONBLOCK);
 
         if (set_access_mode_err == 0 && set_opt_err >= 0) {
+            write(sock, WEB_SUBSCRIBER_OK, strlen(WEB_SUBSCRIBER_OK));
             add_web_subscriber_to_stream(data, sock);
         } else {
             close(sock);
         }
+
         int mutex_lock_err = pthread_mutex_unlock(&data->access_lock);
         assert(mutex_lock_err == 0);
     }
