@@ -166,7 +166,7 @@ void active_stream_list(
         num_streams = data->num_names;
     }
 
-    char * size_str = malloc(17);
+    char size_str[17];
 
     for (unsigned int i = 0; i < data->num_names && i < num_streams; i++) {
         bool is_last_name = i + 1 >= data->num_names || i + 1 >= num_streams;
@@ -186,7 +186,6 @@ void active_stream_list(
         }
         write(sock, "\r\n", 2);
     }
-    free(size_str);
 
     write(sock, "1\r\n]\r\n", 6);
     write(sock, "0\r\n\r\n", 5);
@@ -233,22 +232,19 @@ void single_stream_data(
 
         write(sock, HTTP_JSON_OK, strlen(HTTP_JSON_OK));
 
-        char * num_subscribers_str = malloc(10);
+        char num_subscribers_str[10];
         snprintf(num_subscribers_str, 10, "%u", num_subscribers);
         size_t str_len = strlen(num_subscribers_str);
 
         write(sock, HTTP_CONTENT_LENGTH, strlen(HTTP_CONTENT_LENGTH));
 
-        char * str_len_str = malloc(17);
+        char str_len_str[17];
         snprintf(str_len_str, 17, "%lx", str_len);
 
         write(sock, str_len_str, strlen(str_len_str));
         write(sock, "\r\n\r\n", 4);
 
         write(sock, num_subscribers_str, str_len);
-
-        free(num_subscribers_str);
-        free(str_len_str);
     }
 
     close(sock);
