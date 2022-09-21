@@ -2,12 +2,13 @@
 #include <assert.h>
 #include <stdio.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <pthread.h>
 #include <sys/time.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <string.h>
-#include <errno.h>
+#include <fcntl.h>
 #include "published_stream.h"
 #include "authenticator.h"
 #include "web_listener.h"
@@ -39,15 +40,15 @@ void start_web_listener(
 
     int sock = socket(AF_INET, SOCK_STREAM, 0);
 
-    int set_sock_opt_err;
+    int set_sock_opt_err = 0;
 
     int yes = 1;
-    set_sock_opt_err =
+    set_sock_opt_err |=
         setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
-    assert(set_sock_opt_err == 0);
 
-    set_sock_opt_err = 
+    set_sock_opt_err |= 
         setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &yes, sizeof(yes));
+
     assert(set_sock_opt_err == 0);
 
     int bind_err = bind(sock, (struct sockaddr *) &addr, sizeof(addr));
@@ -117,29 +118,29 @@ void * run_web_listener(void * _d) {
                 sock, (struct sockaddr *) &client_addr, &client_addr_len);
         if (client_sock < 0) continue;
 
-        int set_sock_opt_err;
+        int set_sock_opt_err = 0;
 
-        set_sock_opt_err = setsockopt(
+        set_sock_opt_err |= setsockopt(
                 client_sock, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
-        if (set_sock_opt_err != 0) {
-            close(client_sock);
-            continue;
-        }
 
-        set_sock_opt_err = setsockopt(
+        set_sock_opt_err |= setsockopt(
                 client_sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
-        if (set_sock_opt_err != 0) {
-            close(client_sock);
-            continue;
-        }
+
+        int yes = 1;
+        set_sock_opt_err |= setsockopt(
+            sock, IPPROTO_TCP, TCP_NODELAY, (char *) &yes, sizeof(yes));
 
         int buf_len = WEB_SEND_BUFFER_SIZE;
-        set_sock_opt_err = setsockopt(
+        set_sock_opt_err |= setsockopt(
                 client_sock, SOL_SOCKET, SO_SNDBUF, &buf_len, sizeof(buf_len));
-        if (set_sock_opt_err != 0) {
+
+        int set_access_mode_err = fcntl(sock, F_SETFL, O_NONBLOCK);
+
+        if (set_sock_opt_err != 0 || set_access_mode_err != 0) {
             close(client_sock);
             continue;
         }
+        
 
         if (max_pending_connections_exceeded(auth)) {
             close(client_sock);

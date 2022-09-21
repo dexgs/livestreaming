@@ -4,10 +4,8 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
-#include <fcntl.h> 
 #include <sys/socket.h>
 #include <netinet/ip.h>
-#include <netinet/tcp.h>
 #include "published_stream.h"
 #include "authenticator.h"
 #include "srt.h"
@@ -126,6 +124,11 @@ void remove_srt_subscriber_node(
 void add_web_subscriber_to_stream(
         struct published_stream_data * data, int sock)
 {
+    int prio = 0;
+    int set_sock_opt_err =
+        setsockopt(sock, SOL_SOCKET, SO_PRIORITY, &prio, sizeof(prio));
+    assert(set_sock_opt_err == 0);
+
     struct web_subscriber_node * subscriber =
         malloc(sizeof(struct web_subscriber_node));
 
@@ -642,20 +645,8 @@ void add_web_subscriber(
         write(sock, WEB_SUBSCRIBER_NOT_FOUND, strlen(WEB_SUBSCRIBER_NOT_FOUND));
         close(sock);
     } else {
-        // Send data as soon as possible to reduce latency
-        int yes = 1;
-        int set_opt_err =
-            setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *) &yes, sizeof(yes));
-
-        // Set socket to nonblocking mode
-        int set_access_mode_err = fcntl(sock, F_SETFL, O_NONBLOCK);
-
-        if (set_access_mode_err == 0 && set_opt_err >= 0) {
-            write(sock, WEB_SUBSCRIBER_OK, strlen(WEB_SUBSCRIBER_OK));
-            add_web_subscriber_to_stream(data, sock);
-        } else {
-            close(sock);
-        }
+        write(sock, WEB_SUBSCRIBER_OK, strlen(WEB_SUBSCRIBER_OK));
+        add_web_subscriber_to_stream(data, sock);
 
         int mutex_lock_err = pthread_mutex_unlock(&data->access_lock);
         assert(mutex_lock_err == 0);
