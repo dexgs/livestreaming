@@ -21,20 +21,15 @@ function startPlayer(e) {
     if (typeof e != typeof undefined) {
         e.preventDefault();
     }
-    playStream(streamNameInput.value);
+    playStream(streamNameInput.value, true);
 }
 
 function playStream(streamName) {
+    cleanupPlayer();
+
     fetch(web_url + "/api/stream/" + streamName)
     .then(response => {
         if (response.ok) {
-            if (player) {
-                player.pause();
-                player.detachMediaElement();
-                player.unload();
-                player.destroy();
-                player = null;
-            }
             if (mpegts.getFeatureList().mseLivePlayback) {
                 window.location.hash = streamName;
                 var videoElement = streamPlayer;
@@ -49,14 +44,25 @@ function playStream(streamName) {
                     enableStashBuffer: enableBufferInput.checked,
                     stashInitialSize: bufferSizeInput.value * 1000
                 });
+
                 player.on(mpegts.Events.ERROR, () => {
                     playStream(streamName);
                 });
+
                 player.attachMediaElement(videoElement);
                 player.load();
                 player.play();
             }
-        } else {
         }
     });
+}
+
+function cleanupPlayer() {
+    if (player) {
+        player.pause();
+        player.detachMediaElement();
+        player.unload();
+        player.destroy();
+        player = null;
+    }
 }
