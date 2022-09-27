@@ -5,7 +5,7 @@
 #include "published_stream.h"
 
 #ifndef SRT_LISTEN_BACKLOG
-#define SRT_LISTEN_BACKLOG 10
+#define SRT_LISTEN_BACKLOG 100
 #endif
 
 #ifndef MAX_PACKETS_IN_FLIGHT

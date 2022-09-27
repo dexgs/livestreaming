@@ -24,8 +24,8 @@ services:
         # Everything above this line should be changed to suit your needs.
         # Everything below this line should only be changed if you know what
         # you're doing.
-        - WEB_LISTEN_BACKLOG=10
-        - SRT_LISTEN_BACKLOG=10
+        - WEB_LISTEN_BACKLOG=100
+        - SRT_LISTEN_BACKLOG=100
         - MAP_SIZE=500
         - MAX_PACKETS_IN_FLIGHT=25600
         - SEND_BUFFER_SIZE=1500000

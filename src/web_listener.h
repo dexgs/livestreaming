@@ -6,7 +6,7 @@
 #include "published_stream.h"
 
 #ifndef WEB_LISTEN_BACKLOG
-#define WEB_LISTEN_BACKLOG 10
+#define WEB_LISTEN_BACKLOG 100
 #endif
 
 #ifndef WEB_SEND_BUFFER_SIZE
