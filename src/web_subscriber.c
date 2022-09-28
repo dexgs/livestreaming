@@ -44,8 +44,9 @@ void web_subscriber(
     assert(pthread_err == 0);
 }
 
-// Return stack allocated string with contents equal to str with `prefix` and
-// trailing slash (if present) removed.
+// Return string with contents equal to str with `prefix` and trailing slash
+// (if present) removed. The returned string is backed by the same memory as
+// `str` and trimming any trailing slash mutates str.
 char * strip_prefix(const char * prefix, char * str, size_t str_len) {
     size_t prefix_len = strlen(prefix);
     char * stripped;
