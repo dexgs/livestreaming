@@ -84,16 +84,18 @@ void * run_web_subscriber(void * _d) {
     while (bytes_read < buf_size) {
         ssize_t b = read(sock, buf + bytes_read, buf_size - bytes_read);
 
-        if (b < 0) {
-            // drop connection on error
+        if (b > 0) {
+            bytes_read += b;
+
+            // If the buffer ends with a double carriage return, then we know
+            // the request is over.
+            if (bytes_read >= 4 && strncmp("\r\n\r\n", buf + bytes_read - 4, 4) == 0) {
+                break;
+            }
+        } else {
             close(sock);
             free(addr);
             return NULL;
-        } else if (b > 0) {
-            bytes_read += b;
-        } else {
-            // if we read 0 bytes, assume the request is finished
-            break;
         }
     }
 
@@ -107,11 +109,12 @@ void * run_web_subscriber(void * _d) {
     size_t num_headers = 100;
 
     int parse_err = phr_parse_request(
-            buf, sizeof(buf) - 1, &method, &method_len, (const char **) &path,
-            &path_len,&minor_version, headers, &num_headers, 0);
+            buf, buf_size, &method, &method_len, (const char **) &path,
+            &path_len, &minor_version, headers, &num_headers, 0);
 
     if (parse_err <= 0) {
         free(addr);
+        close(sock);
         return NULL;
     }
 
