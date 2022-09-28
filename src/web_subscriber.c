@@ -78,11 +78,22 @@ void * run_web_subscriber(void * _d) {
     char buf[1024];
     // "- 1" is significant. It's here so that we can make any substring of
     // `buf` null terminated without writing to out-of-bounds memory.
-    ssize_t bytes_read = read(sock, buf, sizeof(buf) - 1);
-    if (bytes_read < 0) {
-        close(sock);
-        free(addr);
-        return NULL;
+    size_t buf_size = sizeof(buf) - 1;
+    size_t bytes_read = 0;
+    while (bytes_read < buf_size) {
+        ssize_t b = read(sock, buf + bytes_read, buf_size - bytes_read);
+
+        if (b < 0) {
+            // drop connection on error
+            close(sock);
+            free(addr);
+            return NULL;
+        } else if (b > 0) {
+            bytes_read += b;
+        } else {
+            // if we read 0 bytes, assume the request is finished
+            break;
+        }
     }
 
     // HTTP request data
