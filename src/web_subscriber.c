@@ -92,9 +92,7 @@ void * run_web_subscriber(void * _d) {
 
         if (strncmp(DOUBLE_CR, buf + bytes_read - 4, 4) == 0) {
             break;
-        } else if (b > 256) {
-            sleep(1);
-        } else {
+        } else if (b < 256) {
             close(sock);
             free(addr);
             return NULL;

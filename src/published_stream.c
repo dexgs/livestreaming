@@ -6,6 +6,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <netinet/ip.h>
+#include <fcntl.h>
 #include "published_stream.h"
 #include "authenticator.h"
 #include "srt.h"
@@ -128,6 +129,9 @@ void add_web_subscriber_to_stream(
     int set_sock_opt_err =
         setsockopt(sock, SOL_SOCKET, SO_PRIORITY, &prio, sizeof(prio));
     assert(set_sock_opt_err == 0);
+
+    int set_access_mode_err = fcntl(sock, F_SETFL, O_NONBLOCK);
+    assert(set_access_mode_err == 0);
 
     struct web_subscriber_node * subscriber =
         malloc(sizeof(struct web_subscriber_node));
