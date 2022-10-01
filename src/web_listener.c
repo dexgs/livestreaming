@@ -142,6 +142,10 @@ void * run_web_listener(void * _d) {
         set_sock_opt_err |= setsockopt(
                 client_sock, SOL_SOCKET, SO_SNDBUF, &buf_len, sizeof(buf_len));
 
+        int recv_buf_len = 1024;
+        set_sock_opt_err |= setsockopt(
+                client_sock, SOL_SOCKET, SO_RCVBUF, &recv_buf_len, sizeof(recv_buf_len));
+
         int set_access_mode_err = fcntl(client_sock, F_SETFL, O_NONBLOCK);
 
         if (set_sock_opt_err != 0 || set_access_mode_err != 0) {

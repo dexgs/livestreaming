@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <pthread.h>
 #include <assert.h>
+#include <unistd.h>
 #include "web_subscriber.h"
 #include "web_api.h"
 #include "authenticator.h"
@@ -65,6 +66,7 @@ char * strip_prefix(const char * prefix, char * str, size_t str_len) {
 
 const char * STREAM_PATH = "/stream/";
 const char * API_PATH = "/api/";
+const char * DOUBLE_CR = "\r\n\r\n";
 
 void * run_web_subscriber(void * _d) {
     struct thread_data * d = (struct thread_data *) _d;
@@ -76,7 +78,7 @@ void * run_web_subscriber(void * _d) {
     struct web_api_data * data = d->data;
     free(d);
 
-    char buf[1024];
+    char buf[1024] = {0};
     // "- 1" is significant. It's here so that we can make any substring of
     // `buf` null terminated without writing to out-of-bounds memory.
     size_t buf_size = sizeof(buf) - 1;
@@ -86,12 +88,12 @@ void * run_web_subscriber(void * _d) {
 
         if (b > 0) {
             bytes_read += b;
+        }
 
-            // If the buffer ends with a double carriage return, then we know
-            // the request is over.
-            if (bytes_read >= 4 && strncmp("\r\n\r\n", buf + bytes_read - 4, 4) == 0) {
-                break;
-            }
+        if (strncmp(DOUBLE_CR, buf + bytes_read - 4, 4) == 0) {
+            break;
+        } else if (b > 256) {
+            sleep(1);
         } else {
             close(sock);
             free(addr);
