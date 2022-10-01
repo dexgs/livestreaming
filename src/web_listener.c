@@ -111,7 +111,7 @@ void * run_web_listener(void * _d) {
 
     unsigned int client_addr_len = sizeof(client_addr);
 
-    struct timeval timeout = { .tv_sec = 0, .tv_usec = 500000 };
+    struct timeval timeout = { .tv_sec = 1, .tv_usec = 0 };
 
     while (true) {
         int client_sock = accept(
@@ -136,13 +136,13 @@ void * run_web_listener(void * _d) {
 
         int yes = 1;
         set_sock_opt_err |= setsockopt(
-            sock, IPPROTO_TCP, TCP_NODELAY, (char *) &yes, sizeof(yes));
+            client_sock, IPPROTO_TCP, TCP_NODELAY, (char *) &yes, sizeof(yes));
 
         int buf_len = WEB_SEND_BUFFER_SIZE;
         set_sock_opt_err |= setsockopt(
                 client_sock, SOL_SOCKET, SO_SNDBUF, &buf_len, sizeof(buf_len));
 
-        int set_access_mode_err = fcntl(sock, F_SETFL, O_NONBLOCK);
+        int set_access_mode_err = fcntl(client_sock, F_SETFL, O_NONBLOCK);
 
         if (set_sock_opt_err != 0 || set_access_mode_err != 0) {
             close(client_sock);
