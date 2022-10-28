@@ -45,8 +45,10 @@ function playStream(streamName) {
                     stashInitialSize: bufferSizeInput.value * 1000
                 });
 
-                player.on(mpegts.Events.ERROR, () => {
-                    playStream(streamName);
+                player.on(mpegts.Events.ERROR, e => {
+                    if (e != mpegts.ErrorTypes.MEDIA_ERROR) {
+                        playStream(streamName);
+                    }
                 });
 
                 player.attachMediaElement(videoElement);
