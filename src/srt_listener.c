@@ -63,31 +63,19 @@ void set_sock_flags(SRTSOCKET sock) {
     set_flag_err = srt_setsockflag(sock, SRTO_FC, &max_fc, sizeof(max_fc));
     assert(set_flag_err != SRT_ERROR);
 
-    int send_buf = SEND_BUFFER_SIZE;
-    // Set minimum buffer sizes
+    int payload_size = SRT_BUFFER_SIZE;
     set_flag_err =
-        srt_setsockflag(sock, SRTO_SNDBUF, &send_buf, sizeof(send_buf));
+        srt_setsockflag(sock, SRTO_PAYLOADSIZE, &payload_size, sizeof(payload_size));
     assert(set_flag_err != SRT_ERROR);
 
-    int recv_buf = RECV_BUFFER_SIZE;
-    set_flag_err =
-        srt_setsockflag(sock, SRTO_RCVBUF, &recv_buf, sizeof(recv_buf));
-    assert(set_flag_err != SRT_ERROR);
-
-    int oh_percent = OVERHEAD_BW_PERCENT;
-    // Set what percentage of bandwidth is allowed to be used for overhead
-    set_flag_err =
-        srt_setsockflag(sock, SRTO_OHEADBW, &oh_percent, sizeof(oh_percent));
+    // Set receive latency
+    int ms = RECV_LATENCY_MS;
+    set_flag_err = srt_setsockflag(sock, SRTO_RCVLATENCY, &ms, sizeof(ms));
     assert(set_flag_err != SRT_ERROR);
 
     struct linger l = {.l_onoff = 0, .l_linger = 0};
     // Disable socket linger
     set_flag_err = srt_setsockflag(sock, SRTO_LINGER, &l, sizeof(l));
-    assert(set_flag_err != SRT_ERROR);
-
-    // Set latency
-    int ms = LATENCY_MS;
-    set_flag_err = srt_setsockflag(sock, SRTO_LATENCY, &ms, sizeof(ms));
     assert(set_flag_err != SRT_ERROR);
 
     bool enable_tsbpd = ENABLE_TIMESTAMPS;
@@ -106,6 +94,18 @@ void set_sock_flags(SRTSOCKET sock) {
     // Set drift tracer toggle
     set_flag_err =
         srt_setsockflag(sock, SRTO_DRIFTTRACER, &enable_drift, sizeof(enable_drift));
+    assert(set_flag_err != SRT_ERROR);
+
+    // Set recv buffer size
+    int recv_buf = RECV_BUFFER_SIZE;
+    set_flag_err =
+        srt_setsockflag(sock, SRTO_RCVBUF, &recv_buf, sizeof(recv_buf));
+    assert(set_flag_err != SRT_ERROR);
+
+    // Set send buffer size
+    int send_buf = SEND_BUFFER_SIZE;
+    set_flag_err =
+        srt_setsockflag(sock, SRTO_SNDBUF, &send_buf, sizeof(send_buf));
     assert(set_flag_err != SRT_ERROR);
 }
 

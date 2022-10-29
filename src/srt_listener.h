@@ -20,12 +20,8 @@
 #define RECV_BUFFER_SIZE 1500000
 #endif
 
-#ifndef OVERHEAD_BW_PERCENT
-#define OVERHEAD_BW_PERCENT 25
-#endif
-
-#ifndef LATENCY_MS
-#define LATENCY_MS 60
+#ifndef RECV_LATENCY_MS
+#define RECV_LATENCY_MS 60
 #endif
 
 #ifndef ENABLE_TIMESTAMPS

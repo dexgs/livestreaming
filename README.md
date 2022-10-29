@@ -35,10 +35,8 @@ The following values can be defined at compile time:
   [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_SNDBUF)
 - `RECV_BUFFER_SIZE` : `int`
   [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_RCVBUF)
-- `OVERHEAD_BW_PERCENT` : `int`
-  [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_OHEADBW)
-- `LATENCY_MS` : `int`
-  [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_LATENCY)
+- `RECV_LATENCY_MS` : `int`
+  [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_RCVLATENCY)
 - `ENABLE_TIMESTAMPS` : `bool`
   [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_TSBPDMODE)
 - `ENABLE_REPEATED_LOSS_REPORTS` : `bool`
