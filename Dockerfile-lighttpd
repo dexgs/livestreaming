@@ -4,14 +4,16 @@ FROM alpine:3.14
 ARG HOSTNAME
 ARG SRT_SUBSCRIBE_PORT
 
-RUN mkdir -p /etc/lighttpd
-WORKDIR /etc/lighttpd
-COPY ./lighttpd.conf .
 COPY ./www /www
 
-RUN sed -i "s/\(var web_url = \).*/\1\"\/backend\";/g" /www/js/config.js
-RUN sed -i "s/\(var srt_url = \"srt:\/\/\).*/\1$HOSTNAME:$SRT_SUBSCRIBE_PORT\";/g" /www/js/config.js
+RUN sed -i "s/\(var web_url = \).*/\1\"\/backend\";/g" /www/js/config.js &&\
+sed -i "s/\(var srt_url = \"srt:\/\/\).*/\1$HOSTNAME:$SRT_SUBSCRIBE_PORT\";/g" /www/js/config.js &&\
+apk --no-cache add lighttpd &&\
+mkdir -p /etc/lighttpd
 
-RUN apk add lighttpd
+WORKDIR /etc/lighttpd
+
+COPY ./lighttpd.conf .
+
 
 CMD ["lighttpd", "-D", "-f", "lighttpd.conf"]
