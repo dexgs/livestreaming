@@ -5,11 +5,11 @@ SRT and HTTP licensed under the GPLv3.
 
 ## Dependencies
 
-ShaRT depends on [SRT](https://github.com/Haivision/srt) version `1.5.0` and
-[PicoHTTPParser](https://github.com/h2o/picohttpparser) against which it links
-statically. It also depends on `openssl`, `libcrypto` and `libpthread` being
-available on the host system. You also need `cmake` installed in order to
-compile SRT.
+ShaRT depends on [SRT](https://github.com/Haivision/srt) and
+[PicoHTTPParser](https://github.com/h2o/picohttpparser) which are vendored in
+the `thirdparty/` directory and linked statically. It also depends on
+`openssl`, `libcrypto` and `libpthread` which must be provided by the host
+system. `cmake` is required to compile SRT.
 
 ## Building
 
