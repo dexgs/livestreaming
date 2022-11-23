@@ -46,7 +46,7 @@ function playStream(streamName) {
                 });
 
                 player.on(mpegts.Events.ERROR, e => {
-                    if (e != mpegts.ErrorTypes.MEDIA_ERROR) {
+                    if (e == mpegts.ErrorTypes.NETWORK_ERROR) {
                         playStream(streamName);
                     }
                 });
