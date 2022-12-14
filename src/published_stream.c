@@ -125,12 +125,12 @@ void remove_srt_subscriber_node(
 
     increment_num_subscribers(data, -1);
 
-    // Free memory
-    free(subscriber);
-
 #ifndef NDEBUG
     printf("Removed SRT subscriber: %i\n", subscriber->sock);
 #endif
+
+    // Free memory
+    free(subscriber);
 }
 
 
@@ -186,12 +186,12 @@ void remove_web_subscriber_node(
 
     increment_num_subscribers(data, -1);
 
-    // Free memory
-    free(subscriber);
-
 #ifndef NDEBUG
     printf("Removed web subscriber: %i\n", subscriber->sock);
 #endif
+
+    // Free memory
+    free(subscriber);
 }
 
 
