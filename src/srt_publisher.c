@@ -25,7 +25,9 @@ void * srt_publisher(void * _d) {
         add_stream_to_map(map, auth, &name, addr, sock);
     if (data == NULL) return NULL;
 
+#ifndef NDEBUG
     printf("`%s` started publishing `%s`\n", addr, name);
+#endif
 
     char buf[SRT_BUFFER_SIZE] = {0};
     int mutex_lock_err;
@@ -88,7 +90,9 @@ void * srt_publisher(void * _d) {
         inorder = mctrl.inorder;
     }
 
+#ifndef NDEBUG
     printf("`%s` stopped publishing `%s`\n", addr, name);
+#endif
     free(addr);
 
     remove_stream_from_map(map, data);

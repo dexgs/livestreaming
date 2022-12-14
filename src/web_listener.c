@@ -56,7 +56,9 @@ void start_web_listener(
     int listen_err = listen(sock, WEB_LISTEN_BACKLOG);
     assert(listen_err == 0);
 
+#ifndef NDEBUG
     printf("Listening for web subscribers on port: %d\n", port);
+#endif
 
     struct thread_data * d = malloc(sizeof(struct thread_data));
     d->sock = sock;

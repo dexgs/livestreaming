@@ -1,3 +1,7 @@
+#ifndef NDEBUG
+#include <stdio.h>
+#endif
+
 #include <pthread.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -99,6 +103,10 @@ void add_srt_subscriber_to_stream(
     assert(mutex_lock_err == 0);
 
     increment_num_subscribers(data, 1);
+
+#ifndef NDEBUG
+    printf("Added SRT subscriber: %i\n", sock);
+#endif
 }
 
 
@@ -119,6 +127,10 @@ void remove_srt_subscriber_node(
 
     // Free memory
     free(subscriber);
+
+#ifndef NDEBUG
+    printf("Removed SRT subscriber: %i\n", subscriber->sock);
+#endif
 }
 
 
@@ -153,6 +165,10 @@ void add_web_subscriber_to_stream(
     assert(mutex_lock_err == 0);
 
     increment_num_subscribers(data, 1);
+
+#ifndef NDEBUG
+    printf("Added web subscriber: %i\n", sock);
+#endif
 }
 
 
@@ -172,6 +188,10 @@ void remove_web_subscriber_node(
 
     // Free memory
     free(subscriber);
+
+#ifndef NDEBUG
+    printf("Removed web subscriber: %i\n", subscriber->sock);
+#endif
 }
 
 

@@ -46,10 +46,14 @@ void start_srt_listeners(
 {
     srt_startup();
 
+#ifndef NDEBUG
     printf("Listening for SRT publishers on port: %d\n", publish_port);
+#endif
     start_srt_listener(publish_port, auth, map, true, publish_passphrase);
 
+#ifndef NDEBUG
     printf("Listening for SRT subscribers on port: %d\n", subscribe_port);
+#endif
     start_srt_listener(subscribe_port, auth, map, false, subscribe_passphrase);
 }
 
