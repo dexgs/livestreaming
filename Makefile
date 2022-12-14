@@ -18,7 +18,12 @@ all: srt ShaRT
 
 src = $(wildcard src/*.c) \
 	  thirdparty/picohttpparser/picohttpparser.c
-obj = $(src:.c=.o)
+obj = $(src:src/%.c=obj/%.o)
+obj/%.o: src/%.c
+	@mkdir -p "$(@D)"
+	@$(CC) -c $(CFLAGS) $< -o $@
+
+
 
 ShaRT: $(obj)
 	@mkdir -p bin
