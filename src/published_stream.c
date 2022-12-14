@@ -105,7 +105,7 @@ void add_srt_subscriber_to_stream(
     increment_num_subscribers(data, 1);
 
 #ifndef NDEBUG
-    printf("Added SRT subscriber: %i\n", sock);
+    printf("Added SRT subscriber %i to stream %s\n", sock, data->name);
 #endif
 }
 
@@ -126,7 +126,7 @@ void remove_srt_subscriber_node(
     increment_num_subscribers(data, -1);
 
 #ifndef NDEBUG
-    printf("Removed SRT subscriber: %i\n", subscriber->sock);
+    printf("Removed SRT subscriber %i from stream %s\n", subscriber->sock, data->name);
 #endif
 
     // Free memory
@@ -167,7 +167,7 @@ void add_web_subscriber_to_stream(
     increment_num_subscribers(data, 1);
 
 #ifndef NDEBUG
-    printf("Added web subscriber: %i\n", sock);
+    printf("Added web subscriber %i to stream %s\n", sock, data->name);
 #endif
 }
 
@@ -187,7 +187,7 @@ void remove_web_subscriber_node(
     increment_num_subscribers(data, -1);
 
 #ifndef NDEBUG
-    printf("Removed web subscriber: %i\n", subscriber->sock);
+    printf("Removed web subscriber %i from stream %s\n", subscriber->sock, data->name);
 #endif
 
     // Free memory
