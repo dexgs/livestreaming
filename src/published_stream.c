@@ -137,11 +137,6 @@ void remove_srt_subscriber_node(
 void add_web_subscriber_to_stream(
         struct published_stream_data * data, int sock)
 {
-    int prio = 0;
-    int set_sock_opt_err =
-        setsockopt(sock, SOL_SOCKET, SO_PRIORITY, &prio, sizeof(prio));
-    assert(set_sock_opt_err == 0);
-
     int set_access_mode_err = fcntl(sock, F_SETFL, O_NONBLOCK);
     assert(set_access_mode_err == 0);
 

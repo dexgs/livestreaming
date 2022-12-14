@@ -127,18 +127,6 @@ void * run_web_listener(void * _d) {
         set_sock_opt_err |= setsockopt(
                 client_sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 
-        // Set reduced priority for web connections. If the connection ends
-        // up being a web subscriber (rather than an API request) then we
-        // set the priority back to zero (the default). This gives web
-        // subscribers priority over API requests.
-        int prio = 1;
-        set_sock_opt_err |= setsockopt(
-                client_sock, SOL_SOCKET, SO_PRIORITY, &prio, sizeof(prio));
-
-        int yes = 1;
-        set_sock_opt_err |= setsockopt(
-            client_sock, IPPROTO_TCP, TCP_NODELAY, (char *) &yes, sizeof(yes));
-
         int buf_len = WEB_SEND_BUFFER_SIZE;
         set_sock_opt_err |= setsockopt(
                 client_sock, SOL_SOCKET, SO_SNDBUF, &buf_len, sizeof(buf_len));

@@ -5,6 +5,8 @@
 #include <pthread.h>
 #include <assert.h>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/tcp.h>
 #include "web_subscriber.h"
 #include "web_api.h"
 #include "authenticator.h"
@@ -178,6 +180,10 @@ int write_to_web_subscriber(
 
     int total_bytes = 0;
     int bytes_written;
+
+    int on = 1;
+    setsockopt(sock, SOL_TCP, TCP_CORK, &on, sizeof(on));
+
     for (int i = 0; i < 4; i++) {
         if (lengths[i] > 0) {
             bytes_written = write(sock, buffers[i], lengths[i]);
@@ -185,6 +191,9 @@ int write_to_web_subscriber(
             total_bytes += bytes_written;
         }
     }
+
+    int off = 0;
+    setsockopt(sock, SOL_TCP, TCP_CORK, &off, sizeof(off));
 
     return total_bytes;
 }
