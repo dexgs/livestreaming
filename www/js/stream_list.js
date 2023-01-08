@@ -46,12 +46,27 @@ function showActiveStreams(list) {
         srt.href = srt_url + "?streamid=" + name;
         srt.title = srt.href;
 
-        button.innerHTML = name;
-        button.title = "Watch " + name;
+        let decoded = safeString(decodeURIComponent(name));
+
+        button.innerHTML = decoded;
+        button.title = "Watch " + decoded;
         button.onclick = () => {
             streamNameInput.value = name;
             playStream(name);
         };
         streamList.appendChild(clone);
     });
+}
+
+function safeString(str) {
+    if (typeof str == typeof "") {
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    } else {
+        return str;
+    }
 }
