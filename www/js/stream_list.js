@@ -46,9 +46,9 @@ function showActiveStreams(list) {
         srt.href = srt_url + "?streamid=" + name;
         srt.title = srt.href;
 
-        let decoded = safeString(decodeURIComponent(name));
+        let decoded = decodeURIComponent(name);
 
-        button.innerHTML = decoded;
+        button.innerHTML = safeString(decoded);
         button.title = "Watch " + decoded;
         button.onclick = () => {
             streamNameInput.value = name;
