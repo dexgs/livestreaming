@@ -46,9 +46,7 @@ function playStream(streamName) {
                 });
 
                 player.on(mpegts.Events.ERROR, e => {
-                    if (e == mpegts.ErrorTypes.NETWORK_ERROR) {
-                        playStream(streamName);
-                    }
+                    playStream(streamName);
                 });
 
                 player.attachMediaElement(videoElement);
