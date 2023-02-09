@@ -41,13 +41,27 @@ bool contains_illegal_chars(const char * str) {
     // Sanitize command as `popen` implicitly calls `sh -c`
     for (size_t i = 0; str[i] != '\0'; i++) {
         char c = str[i];
-        if (
-                c == '$' || c == '(' || c == ')' || c == '[' || c == ']'
-                || c == '<' || c == '>' || c == '|' || c == '\n' || c == '\\'
-                || c == '&' || c == '*' || c == '#' || c == '~' || c == '!'
-                || c == '`' || c == ';' || c == '\'' || c == '"')
-        {
-            return true;
+        switch (c) {
+                case '$':
+                case '(':
+                case ')':
+                case '[':
+                case ']':
+                case '<':
+                case '>':
+                case '|':
+                case '\n':
+                case '\\':
+                case '&':
+                case '*':
+                case '#':
+                case '~':
+                case '!':
+                case '`':
+                case ';':
+                case '\'':
+                case '"':
+                    return true;
         }
     }
     return false;
