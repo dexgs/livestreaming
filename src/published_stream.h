@@ -76,6 +76,7 @@ struct srt_subscriber_node {
 
 struct web_subscriber_node {
     int sock;
+    size_t num_fails;
     struct web_subscriber_node * next;
     struct web_subscriber_node * prev;
 };

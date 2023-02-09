@@ -143,8 +143,7 @@ void add_web_subscriber_to_stream(
     struct web_subscriber_node * subscriber =
         malloc(sizeof(struct web_subscriber_node));
 
-    subscriber->sock = sock;
-    subscriber->prev = NULL;
+    *subscriber = (struct web_subscriber_node) { .sock = sock };
 
     int mutex_lock_err;
 

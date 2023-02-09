@@ -1,6 +1,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <assert.h>
+#include <error.h>
 #include <unistd.h>
 #include "srt_publisher.h"
 #include "srt.h"
@@ -73,9 +74,18 @@ void * srt_publisher(void * _d) {
 
             struct web_subscriber_node * next_node = web_node->next;
 
-            // If sending failed, remove the subscriber
             if (send_err == -1) {
-                remove_web_subscriber_node(data, web_node);
+                // Allow up to MAX_WEB_SEND_FAILS EAGAIN/EWOULDBLOCK errors
+                // before removing the web node. Immediatly remove the web
+                // node on any other error type.
+                if (
+                        web_node->num_fails <= MAX_WEB_SEND_FAILS
+                        && (errno == EAGAIN || errno == EWOULDBLOCK))
+                {
+                    web_node->num_fails++;
+                } else {
+                    remove_web_subscriber_node(data, web_node);
+                }
             }
 
             web_node = next_node;

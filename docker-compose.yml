@@ -35,6 +35,7 @@ services:
         - ENABLE_TIMESTAMPS=true
         - ENABLE_REPEATED_LOSS_REPORTS=true
         - ENABLE_DRIFT_TRACER=true
+        - MAX_WEB_SEND_FAILS=20
   lighttpd:
     ports:
       - "${LIGHTTPD_PORT:-3000}:80"
