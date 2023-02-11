@@ -29,6 +29,9 @@ The following values can be defined at compile time:
 - `UNLISTED_STREAM_NAME_PREFIX` : `string` - Streams published under a name
   beginning with this string will not be reported by the web API
   (default value is `_`).
+- `MAX_WEB_SEND_FAILS`: `int` - Number of send EAGAIN/EWOULDBLOCK errors to
+   before disconnecting an HTTP subscriber (all other error types cause HTTP
+   subscribers to be dropped immediately).
 - `MAX_PACKETS_IN_FLIGHT` : `int`
   [SRT docs](https://github.com/Haivision/srt/blob/master/docs/API/API-socket-options.md#SRTO_FC)
 - `SEND_BUFFER_SIZE` : `int`
