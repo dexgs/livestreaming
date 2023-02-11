@@ -1,16 +1,11 @@
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <pthread.h>
-#include <stdbool.h>
 #include <assert.h>
 #include <stdio.h>
+
+#include "srt_common.h"
 #include "srt_listener.h"
 #include "srt_publisher.h"
 #include "srt_subscriber.h"
-#include "srt_common.h"
-#include "authenticator.h"
-#include "published_stream.h"
-#include "srt.h"
+
 
 struct thread_data {
     SRTSOCKET sock;
@@ -21,7 +16,7 @@ struct thread_data {
 };
 
 
-struct sockaddr_in get_sockaddr_with_port(unsigned short port) {
+static struct sockaddr_in get_sockaddr_with_port(unsigned short port) {
     struct sockaddr_in addr;
 
     addr.sin_family = AF_INET;
@@ -32,12 +27,12 @@ struct sockaddr_in get_sockaddr_with_port(unsigned short port) {
 }
 
 
-void start_srt_listener(
+static void start_srt_listener(
         unsigned short port, struct authenticator * auth,
         struct published_stream_map * map, bool is_publisher,
         const char * passphrase);
 
-void * run_srt_listener(void * d);
+static void * run_srt_listener(void * d);
 
 void start_srt_listeners(
         unsigned short publish_port, unsigned short subscribe_port,
@@ -114,7 +109,7 @@ void set_sock_flags(SRTSOCKET sock) {
 }
 
 
-void start_srt_listener(
+static void start_srt_listener(
         unsigned short port, struct authenticator * auth,
         struct published_stream_map * map, bool is_publisher,
         const char * passphrase)
@@ -134,11 +129,13 @@ void start_srt_listener(
     assert(bind_err != SRT_ERROR);
 
     struct thread_data * d = malloc(sizeof(struct thread_data));
-    d->sock = sock;
-    d->auth = auth;
-    d->map = map;
-    d->is_publisher = is_publisher;
-    d->addr = addr;
+    *d = (struct thread_data) {
+        .sock = sock,
+        .auth = auth,
+        .map = map,
+        .is_publisher = is_publisher,
+        .addr = addr
+    };
 
     int pthread_err;
     pthread_t thread_handle;
@@ -151,7 +148,7 @@ void start_srt_listener(
 }
 
 
-void * run_srt_listener(void * _d) {
+static void * run_srt_listener(void * _d) {
     struct thread_data * d = (struct thread_data *) _d;
     SRTSOCKET sock = d->sock;
     struct authenticator * auth = d->auth;

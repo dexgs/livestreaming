@@ -1,9 +1,11 @@
 #include <limits.h>
-#include "config.h"
+
 #include "authenticator.h"
+#include "config.h"
 #include "published_stream.h"
 #include "srt_listener.h"
 #include "web_listener.h"
+
 
 int main(int argc, char * argv[]) {
     struct shart_config * c = parse_args_to_config(argc, argv);

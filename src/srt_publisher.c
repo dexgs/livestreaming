@@ -1,14 +1,10 @@
-#include <pthread.h>
-#include <stdio.h>
 #include <assert.h>
-#include <error.h>
-#include <unistd.h>
-#include "srt_publisher.h"
-#include "srt.h"
-#include "published_stream.h"
-#include "web_subscriber.h"
-#include "authenticator.h"
+#include <stdio.h>
+
+#include "guard.h"
 #include "srt_common.h"
+#include "srt_publisher.h"
+#include "web_subscriber.h"
 
 
 void * srt_publisher(void * _d) {
@@ -31,7 +27,6 @@ void * srt_publisher(void * _d) {
 #endif
 
     char buf[SRT_BUFFER_SIZE] = {0};
-    int mutex_lock_err;
     int bytes_read = 0;
     int inorder = 0;
 
@@ -41,58 +36,50 @@ void * srt_publisher(void * _d) {
         int send_err;
 
         // Send data to SRT subscribers
-        mutex_lock_err = pthread_mutex_lock(&data->srt_subscribers_lock);
-        assert(mutex_lock_err == 0);
+        GUARD(&data->srt_subscribers_lock, {
+            struct srt_subscriber_node * srt_node = data->srt_subscribers;
+            while (srt_node != NULL) {
+                send_err = srt_sendmsg(srt_node->sock, buf, bytes_read, -1, inorder);
+                struct srt_subscriber_node * next_node = srt_node->next;
 
-        struct srt_subscriber_node * srt_node = data->srt_subscribers;
-        while (srt_node != NULL) {
-            send_err = srt_sendmsg(srt_node->sock, buf, bytes_read, -1, inorder);
-            struct srt_subscriber_node * next_node = srt_node->next;
+                // If sending failed, remove the subscriber
+                if (send_err == SRT_ERROR) {
+                    remove_srt_subscriber_node(data, srt_node);
+                }
 
-            // If sending failed, remove the subscriber
-            if (send_err == SRT_ERROR) {
-                remove_srt_subscriber_node(data, srt_node);
+                srt_node = next_node;
             }
-
-            srt_node = next_node;
-        }
-
-        mutex_lock_err = pthread_mutex_unlock(&data->srt_subscribers_lock);
-        assert(mutex_lock_err == 0);
+        })
 
         // Send data to Web subscribers
-        mutex_lock_err = pthread_mutex_lock(&data->web_subscribers_lock);
-        assert(mutex_lock_err == 0);
+        GUARD(&data->web_subscribers_lock, {
+            unsigned int hex_len;
+            get_len_hex(bytes_read, hex, sizeof(hex), &hex_len);
 
-        unsigned int hex_len;
-        get_len_hex(bytes_read, hex, sizeof(hex), &hex_len);
+            struct web_subscriber_node * web_node = data->web_subscribers;
+            while (web_node != NULL) {
+                send_err = write_to_web_subscriber(
+                        web_node->sock, hex, hex_len, buf, bytes_read);
 
-        struct web_subscriber_node * web_node = data->web_subscribers;
-        while (web_node != NULL) {
-            send_err = write_to_web_subscriber(
-                    web_node->sock, hex, hex_len, buf, bytes_read);
+                struct web_subscriber_node * next_node = web_node->next;
 
-            struct web_subscriber_node * next_node = web_node->next;
-
-            if (send_err == -1) {
-                // Allow up to MAX_WEB_SEND_FAILS EAGAIN/EWOULDBLOCK errors
-                // before removing the web node. Immediatly remove the web
-                // node on any other error type.
-                if (
-                        web_node->num_fails <= MAX_WEB_SEND_FAILS
-                        && (errno == EAGAIN || errno == EWOULDBLOCK))
-                {
-                    web_node->num_fails++;
-                } else {
-                    remove_web_subscriber_node(data, web_node);
+                if (send_err == -1) {
+                    // Allow up to MAX_WEB_SEND_FAILS EAGAIN/EWOULDBLOCK errors
+                    // before removing the web node. Immediatly remove the web
+                    // node on any other error type.
+                    if (
+                            web_node->num_fails <= MAX_WEB_SEND_FAILS
+                            && (errno == EAGAIN || errno == EWOULDBLOCK))
+                    {
+                        web_node->num_fails++;
+                    } else {
+                        remove_web_subscriber_node(data, web_node);
+                    }
                 }
+
+                web_node = next_node;
             }
-
-            web_node = next_node;
-        }
-
-        mutex_lock_err = pthread_mutex_unlock(&data->web_subscribers_lock);
-        assert(mutex_lock_err == 0);
+        })
 
         // Fill buffer with new data
         SRT_MSGCTRL mctrl;

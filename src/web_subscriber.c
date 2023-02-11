@@ -95,11 +95,19 @@ void * run_web_subscriber(void * _d) {
         if (strncmp(DOUBLE_CR, buf + bytes_read - 4, 4) == 0) {
             break;
         } else if (b < 256) {
+            // if a single read DOESN'T contain the end of the request and
+            // receivs less than 265 bytes, close the connection because it is
+            // too slow.
             close(sock);
             free(addr);
             return NULL;
         }
     }
+
+    // Switch to non-blocking mode after we've
+    // finished reading the client request.
+    int set_access_mode_err = fcntl(sock, F_SETFL, O_NONBLOCK);
+    assert(set_access_mode_err == 0);
 
     // HTTP request data
     const char * method;

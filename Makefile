@@ -18,20 +18,24 @@ all: srt ShaRT
 
 src = $(wildcard src/*.c) \
 	  thirdparty/picohttpparser/picohttpparser.c
-obj = $(src:src/%.c=obj/%.o)
-obj/%.o: src/%.c
+obj = $(src:%.c=obj/%.o)
+obj/%.o: %.c
 	@mkdir -p "$(@D)"
-	@$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) -c $(CFLAGS) $< -o $@
 
 
-
-ShaRT: $(obj)
+bin/ShaRT: $(obj)
 	@mkdir -p bin
-	$(CXX) $(CFLAGS) -o bin/$@ $^ $(LDFLAGS)
+	$(CXX) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+.PHONY: ShaRT
+ShaRT: bin/ShaRT
 
-test: $(filter-out src/main.o, $(obj)) test/test.o
+bin/test: $(filter-out obj/src/main.o, $(obj)) obj/test/test.o
 	@mkdir -p bin
-	$(CXX) $(CFLAGS) -o bin/$@ $^ $(LDFLAGS)
+	$(CXX) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+.PHONY: test
+test: bin/test
+
 
 SRT_CMAKE_ARGS = \
 	-DENABLE_STATIC:bool=1 -DENABLE_SHARED:bool=0 -DENABLE_LOGGING:bool=0 \
@@ -46,7 +50,7 @@ srt:
 
 .PHONY: clean
 clean:
-	rm -rf $(obj) test/test.o bin
+	rm -rf $(obj) bin
 	rm -rf $(THIRDPARTY_DIR)/srt/_build
 
 ifeq ($(PREFIX),)

@@ -8,16 +8,18 @@
 
 struct shart_config * parse_args_to_config(int argc, char * argv[]) {
     struct shart_config * config = malloc(sizeof(struct shart_config));
-    config->srt_publish_port = DEFAULT_SRT_PUBLISH_PORT;
-    config->srt_publish_passphrase = DEFAULT_SRT_PUBLISH_PASSPHRASE;
-    config->srt_subscribe_port = DEFAULT_SRT_SUBSCRIBE_PORT;
-    config->srt_subscribe_passphrase = DEFAULT_SRT_SUBSCRIBE_PASSPHRASE;
-    config->web_port = DEFAULT_WEB_PORT;
-    config->max_publishers = DEFAULT_MAX_PUBLISHERS;
-    config->max_subscribers_per_publisher = DEFAULT_MAX_SUBSCRIBERS_PER_PUBLISHER;
-    config->max_pending_connections = DEFAULT_MAX_PENDING_CONNECTIONS;
-    config->auth_command = DEFAULT_AUTH_COMMAND;
-    config->read_web_ip_from_headers = DEFAULT_READ_WEB_IP_FROM_HEADERS;
+    *config = (struct shart_config) {
+        .srt_publish_port = DEFAULT_SRT_PUBLISH_PORT,
+        .srt_publish_passphrase = DEFAULT_SRT_PUBLISH_PASSPHRASE,
+        .srt_subscribe_port = DEFAULT_SRT_SUBSCRIBE_PORT,
+        .srt_subscribe_passphrase = DEFAULT_SRT_SUBSCRIBE_PASSPHRASE,
+        .web_port = DEFAULT_WEB_PORT,
+        .max_publishers = DEFAULT_MAX_PUBLISHERS,
+        .max_subscribers_per_publisher = DEFAULT_MAX_SUBSCRIBERS_PER_PUBLISHER,
+        .max_pending_connections = DEFAULT_MAX_PENDING_CONNECTIONS,
+        .auth_command = DEFAULT_AUTH_COMMAND,
+        .read_web_ip_from_headers = DEFAULT_READ_WEB_IP_FROM_HEADERS
+    };
 
     for (int i = 1; i < argc; i += 2) {
         char * flag = argv[i];

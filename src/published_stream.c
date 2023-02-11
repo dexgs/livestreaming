@@ -1,80 +1,44 @@
-#ifndef NDEBUG
 #include <stdio.h>
-#endif
 
-#include <pthread.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <assert.h>
-#include <stdbool.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <netinet/ip.h>
-#include <fcntl.h>
-#include "published_stream.h"
 #include "authenticator.h"
+#include "guard.h"
+#include "published_stream.h"
 #include "srt.h"
 
 
 void increment_num_subscribers(struct published_stream_data * data, int inc) {
-    int mutex_lock_err;
-    // Increment num_subscribers
-    mutex_lock_err = pthread_mutex_lock(&data->num_subscribers_lock);
-    assert(mutex_lock_err == 0);
-
-    data->num_subscribers += inc;
-
-    mutex_lock_err = pthread_mutex_unlock(&data->num_subscribers_lock);
-    assert(mutex_lock_err == 0);
+    GUARD(&data->num_subscribers_lock, {
+        data->num_subscribers += inc;
+    })
 }
 
 
-struct published_stream_data * create_published_stream_data(
+static struct published_stream_data * create_published_stream_data(
         SRTSOCKET sock, char * name)
 {
     struct published_stream_data * data =
         malloc(sizeof(struct published_stream_data));
 
-    int mutex_init_err;
+    *data = (struct published_stream_data) { .sock = sock, .name = name };
 
-    pthread_mutex_t num_subscribers_lock;
-    mutex_init_err = pthread_mutex_init(&num_subscribers_lock, NULL);
+    int mutex_init_err = 0;
+
+    mutex_init_err |= pthread_mutex_init(&data->num_subscribers_lock, NULL);
+    mutex_init_err |= pthread_mutex_init(&data->srt_subscribers_lock, NULL);
+    mutex_init_err |= pthread_mutex_init(&data->web_subscribers_lock, NULL);
+    mutex_init_err |= pthread_mutex_init(&data->access_lock, NULL);
+
     assert(mutex_init_err == 0);
-    data->num_subscribers_lock = num_subscribers_lock;
-
-    pthread_mutex_t srt_subscribers_lock;
-    mutex_init_err = pthread_mutex_init(&srt_subscribers_lock, NULL);
-    assert(mutex_init_err == 0);
-    data->srt_subscribers_lock = srt_subscribers_lock;
-
-    pthread_mutex_t web_subscribers_lock;
-    mutex_init_err = pthread_mutex_init(&web_subscribers_lock, NULL);
-    assert(mutex_init_err == 0);
-    data->web_subscribers_lock = web_subscribers_lock;
-
-    pthread_mutex_t access_lock;
-    mutex_init_err = pthread_mutex_init(&access_lock, NULL);
-    assert(mutex_init_err == 0);
-    data->access_lock = access_lock;
-
-    data->sock = sock;
-    data->name = name;
-    data->num_subscribers = 0;
-    data->srt_subscribers = NULL;
-    data->web_subscribers = NULL;
     return data;
 }
 
 
 unsigned int get_num_subscribers(struct published_stream_data * data) {
-    int mutex_lock_err;
-    mutex_lock_err = pthread_mutex_lock(&data->num_subscribers_lock);
-    assert(mutex_lock_err == 0);
+    unsigned int num_subscribers;
 
-    unsigned int num_subscribers = data->num_subscribers;
-
-    mutex_lock_err = pthread_mutex_unlock(&data->num_subscribers_lock);
-    assert(mutex_lock_err == 0);
+    GUARD(&data->num_subscribers_lock, {
+        num_subscribers = data->num_subscribers;
+    });
 
     return num_subscribers;
 }
@@ -86,21 +50,15 @@ void add_srt_subscriber_to_stream(
     struct srt_subscriber_node * subscriber =
         malloc(sizeof(struct srt_subscriber_node));
 
-    subscriber->sock = sock;
-    subscriber->prev = NULL;
+    *subscriber = (struct srt_subscriber_node) { .sock = sock };
 
-    int mutex_lock_err;
-
-    // Add subscriber
-    mutex_lock_err = pthread_mutex_lock(&data->srt_subscribers_lock);
-    assert(mutex_lock_err == 0);
-
-    subscriber->next = data->srt_subscribers;
-    if (data->srt_subscribers != NULL) data->srt_subscribers->prev = subscriber;
-    data->srt_subscribers = subscriber;
-
-    mutex_lock_err = pthread_mutex_unlock(&data->srt_subscribers_lock);
-    assert(mutex_lock_err == 0);
+    GUARD(&data->srt_subscribers_lock, {
+        subscriber->next = data->srt_subscribers;
+        if (data->srt_subscribers != NULL) {
+            data->srt_subscribers->prev = subscriber;
+        }
+        data->srt_subscribers = subscriber;
+    })
 
     increment_num_subscribers(data, 1);
 
@@ -137,26 +95,18 @@ void remove_srt_subscriber_node(
 void add_web_subscriber_to_stream(
         struct published_stream_data * data, int sock)
 {
-    int set_access_mode_err = fcntl(sock, F_SETFL, O_NONBLOCK);
-    assert(set_access_mode_err == 0);
-
     struct web_subscriber_node * subscriber =
         malloc(sizeof(struct web_subscriber_node));
 
     *subscriber = (struct web_subscriber_node) { .sock = sock };
 
-    int mutex_lock_err;
-
-    // Add subscriber
-    mutex_lock_err = pthread_mutex_lock(&data->web_subscribers_lock);
-    assert(mutex_lock_err == 0);
-
-    subscriber->next = data->web_subscribers;
-    if (data->web_subscribers != NULL) data->web_subscribers->prev = subscriber;
-    data->web_subscribers = subscriber;
-
-    mutex_lock_err = pthread_mutex_unlock(&data->web_subscribers_lock);
-    assert(mutex_lock_err == 0);
+    GUARD(&data->web_subscribers_lock, {
+        subscriber->next = data->web_subscribers;
+        if (data->web_subscribers != NULL) {
+            data->web_subscribers->prev = subscriber;
+        }
+        data->web_subscribers = subscriber;
+    })
 
     increment_num_subscribers(data, 1);
 
@@ -190,7 +140,7 @@ void remove_web_subscriber_node(
 
 
 // djb2
-unsigned long hash(const char * str) {
+static unsigned long hash(const char * str) {
     unsigned long hash = 5381;
     int c;
 
@@ -229,26 +179,20 @@ struct published_stream_map * create_published_stream_map(
     struct published_stream_map * map =
         malloc(sizeof(struct published_stream_map));
 
-    pthread_mutex_t map_lock;
-    int mutex_init_err;
-    mutex_init_err = pthread_mutex_init(&map_lock, NULL);
+    *map = (struct published_stream_map) {
+        .max_publishers = max_publishers,
+        .max_subscribers_per_publisher = max_subscribers_per_publisher
+    };
+
+    int mutex_init_err = pthread_mutex_init(&map->map_lock, NULL);
     assert(mutex_init_err == 0);
-    map->map_lock = map_lock;
-
-    for (int i = 0; i < MAP_SIZE; i++) {
-        map->buckets[i] = NULL;
-    }
-
-    map->num_publishers = 0;
-    map->max_publishers = max_publishers;
-    map->max_subscribers_per_publisher = max_subscribers_per_publisher;
 
     return map;
 }
 
 
 // This function assumes map->map_lock is locked by the current thread
-struct published_stream_node * get_node_with_name(
+static struct published_stream_node * get_node_with_name(
         struct published_stream_map * map, const char * name)
 {
     int index = hash(name) % MAP_SIZE;
@@ -266,85 +210,74 @@ struct published_stream_node * get_node_with_name(
 
 
 bool max_publishers_exceeded(struct published_stream_map * map) {
-    int mutex_lock_err;
+    bool max_publishers_exceeded;
 
-    mutex_lock_err = pthread_mutex_lock(&map->map_lock);
-    assert(mutex_lock_err == 0);
-
-    bool max_publishers_exceeded =
-        map->max_publishers > 0 && map->num_publishers >= map->max_publishers;
-
-    mutex_lock_err = pthread_mutex_unlock(&map->map_lock);
-    assert(mutex_lock_err == 0);
+    GUARD(&map->map_lock, {
+        max_publishers_exceeded =
+            map->max_publishers > 0 && map->num_publishers >= map->max_publishers;
+    })
 
     return max_publishers_exceeded;
 }
 
 
 bool stream_name_in_map(struct published_stream_map * map, const char * name) {
-    int mutex_lock_err;
+    bool stream_name_in_map;
 
-    mutex_lock_err = pthread_mutex_lock(&map->map_lock);
-    assert(mutex_lock_err == 0);
-
-    bool stream_name_in_map = get_node_with_name(map, name) != NULL;
-
-    mutex_lock_err = pthread_mutex_unlock(&map->map_lock);
-    assert(mutex_lock_err == 0);
+    GUARD(&map->map_lock, {
+        stream_name_in_map = get_node_with_name(map, name) != NULL;
+    })
 
     return stream_name_in_map;
 }
 
 
 unsigned int num_published_streams(struct published_stream_map * map) {
-    int mutex_lock_err;
+    unsigned int num_streams;
 
-    mutex_lock_err = pthread_mutex_lock(&map->map_lock);
-    assert(mutex_lock_err == 0);
-
-    unsigned int num_streams = map->num_publishers;
-
-    mutex_lock_err = pthread_mutex_unlock(&map->map_lock);
-    assert(mutex_lock_err == 0);
+    GUARD(&map->map_lock, {
+        num_streams = map->num_publishers;
+    })
 
     return num_streams;
 }
 
 
+// Simple quicksort impl for streams list
 struct stream_info {
     char * name;
     unsigned int num_subscribers;
 };
 
 // Using Hoare's partition scheme
-unsigned int partition_stream_info(
-        struct stream_info ** streams, unsigned int len, unsigned int pivot)
+static unsigned int partition_stream_info(
+        struct stream_info * streams, unsigned int len, unsigned int pivot)
 {
-    struct stream_info * pivot_info = streams[pivot];
+    struct stream_info pivot_info = streams[pivot];
     int l = -1;
     int h = len;
 
     while (true) {
         do {
             l++;
-        } while (streams[l]->num_subscribers > pivot_info->num_subscribers);
+        } while (streams[l].num_subscribers > pivot_info.num_subscribers);
 
         do {
             h--;
-        } while (streams[h]->num_subscribers < pivot_info->num_subscribers);
+        } while (streams[h].num_subscribers < pivot_info.num_subscribers);
 
         if (l >= h) {
             return l;
         }
         // swap
-        struct stream_info * temp = streams[l];
+        struct stream_info temp = streams[l];
         streams[l] = streams[h];
         streams[h] = temp;
     }
 }
 
-void sort_stream_info(
-        struct stream_info ** streams, unsigned int len)
+static void sort_stream_info(
+        struct stream_info * streams, unsigned int len)
 {
     if (len >= 2) {
         unsigned int pivot = len / 2;
@@ -354,74 +287,58 @@ void sort_stream_info(
     }
 }
 
-// Return list of stream names sorted by number of watchers
+// Return list of stream names sorted by number of watchers. The returned
+// pointer is a single allocation.
 char ** stream_names(
         struct published_stream_map * map, unsigned int * num_streams)
 {
-    int mutex_lock_err;
-
-    mutex_lock_err = pthread_mutex_lock(&map->map_lock);
-    assert(mutex_lock_err == 0);
-
-    unsigned int streams_len = map->num_publishers;
-
-    mutex_lock_err = pthread_mutex_unlock(&map->map_lock);
-    assert(mutex_lock_err == 0);
+    unsigned int streams_len;
+    GUARD(&map->map_lock, {
+        streams_len = map->num_publishers;
+    })
 
     if (streams_len == 0) {
         *num_streams = 0;
         return NULL;
     }
 
-    struct stream_info ** streams =
-        malloc(sizeof(struct stream_info *) * streams_len);
+    struct stream_info * streams =
+        malloc(sizeof(struct stream_info) * streams_len);
 
     unsigned int streams_index = 0;
 
     // Collect list of stream info
     for (int i = 0; i < MAP_SIZE; i++) {
-        mutex_lock_err = pthread_mutex_lock(&map->map_lock);
-        assert(mutex_lock_err == 0);
+        GUARD(&map->map_lock, {
+            struct published_stream_node * node = map->buckets[i];
 
-        struct published_stream_node * node = map->buckets[i];
-
-        while (node != NULL) {
-            // If stream is not unlisted
-            if (!(
+            while (node != NULL) {
+                // If stream is not unlisted
+                if (!(
                         strlen(node->data->name) >= strlen(UNLISTED_STREAM_NAME_PREFIX)
                         && strncmp(
                             UNLISTED_STREAM_NAME_PREFIX, node->data->name,
                             strlen(UNLISTED_STREAM_NAME_PREFIX)) == 0))
-            {
-                struct stream_info * info = malloc(sizeof(struct stream_info));
+                {
+                    struct stream_info info;
+                    info.name = strdup(node->data->name);
+                    GUARD(&node->data->num_subscribers_lock, {
+                        info.num_subscribers = node->data->num_subscribers;
+                    })
 
-                info->name = strdup(node->data->name);
+                    // If there isn't enough room to add another stream
+                    if (streams_index >= streams_len) {
+                        streams_len *= 2;
+                        streams =
+                            realloc(streams, sizeof(struct stream_info) * streams_len);
+                    }
 
-                mutex_lock_err =
-                    pthread_mutex_lock(&node->data->num_subscribers_lock);
-                assert (mutex_lock_err == 0);
-
-                info->num_subscribers = node->data->num_subscribers;
-
-                mutex_lock_err =
-                    pthread_mutex_unlock(&node->data->num_subscribers_lock);
-                assert (mutex_lock_err == 0);
-
-                // If there isn't enough room to add another stream
-                if (streams_index >= streams_len) {
-                    streams_len *= 2;
-                    streams =
-                        realloc(streams, sizeof(struct stream_info *) * streams_len);
+                    streams[streams_index] = info;
+                    streams_index++;
                 }
-
-                streams[streams_index] = info;
-                streams_index++;
+                node = node->next;
             }
-            node = node->next;
-        }
-
-        mutex_lock_err = pthread_mutex_unlock(&map->map_lock);
-        assert(mutex_lock_err == 0);
+        })
     }
 
     if (streams_index == 0) {
@@ -429,15 +346,32 @@ char ** stream_names(
         return NULL;
     }
 
-    streams = realloc(streams, sizeof(struct stream_info *) * streams_index);
-
     // Sort stream info by number of subscribers (quicksort)
     sort_stream_info(streams, streams_index);
 
-    char ** stream_names = malloc(sizeof(char *) * streams_index);
-    for(unsigned int i = 0; i < streams_index; i++) {
-        stream_names[i] = streams[i]->name;
-        free(streams[i]);
+    // Pack the sorted stream list into a single allocation
+    size_t base_size = sizeof(char *) * streams_index;
+    size_t capacity = 32 * streams_index;
+    size_t size = 0;
+    char ** stream_names = malloc(base_size + capacity);
+    char * stream_names_buf = (char *) (stream_names + streams_index);
+
+    for(size_t i = 0; i < streams_index; i++) {
+        size_t name_len = strlen(streams[i].name) + 1;
+
+        if (capacity < size + name_len) {
+            while (capacity < size + name_len) {
+                capacity *= 2;
+            }
+            stream_names = realloc(stream_names, base_size + capacity);
+            stream_names_buf = (char *) (stream_names + streams_index);
+        }
+
+        strcpy(stream_names_buf + size, streams[i].name);
+        stream_names[i] = stream_names_buf + size;
+
+        size += name_len;
+        free(streams[i].name);
     }
     free(streams);
 
@@ -449,39 +383,33 @@ char ** stream_names(
 struct published_stream_data * create_stream_data_in_map(
         struct published_stream_map * map, SRTSOCKET sock, char * name)
 {
-    int mutex_lock_err;
-
-    mutex_lock_err = pthread_mutex_lock(&map->map_lock);
-    assert(mutex_lock_err == 0);
-
     struct published_stream_data * data;
 
-    bool max_publishers_exceeded =
-        map->max_publishers > 0 && map->num_publishers >= map->max_publishers;
-    bool stream_name_in_map = get_node_with_name(map, name) != NULL;
+    GUARD(&map->map_lock, {
+        bool max_publishers_exceeded =
+            map->max_publishers > 0 && map->num_publishers >= map->max_publishers;
+        bool stream_name_in_map = get_node_with_name(map, name) != NULL;
 
-    if (max_publishers_exceeded || stream_name_in_map) {
-        data = NULL;
-    } else {
-        data = create_published_stream_data(sock, name);
+        if (max_publishers_exceeded || stream_name_in_map) {
+            data = NULL;
+        } else {
+            data = create_published_stream_data(sock, name);
 
-        int index = hash(name) % MAP_SIZE;
+            int index = hash(name) % MAP_SIZE;
 
-        struct published_stream_node * new_node =
-            malloc(sizeof(struct published_stream_node));
+            struct published_stream_node * new_node =
+                malloc(sizeof(struct published_stream_node));
 
-        new_node->data = data;
-        new_node->prev = NULL;
+            new_node->data = data;
+            new_node->prev = NULL;
 
-        new_node->next = map->buckets[index];
-        if (map->buckets[index] != NULL) map->buckets[index]->prev = new_node;
-        map->buckets[index] = new_node;
+            new_node->next = map->buckets[index];
+            if (map->buckets[index] != NULL) map->buckets[index]->prev = new_node;
+            map->buckets[index] = new_node;
 
-        map->num_publishers++;
-    }
-
-    mutex_lock_err = pthread_mutex_unlock(&map->map_lock);
-    assert(mutex_lock_err == 0);
+            map->num_publishers++;
+        }
+    })
 
     return data;
 }
@@ -516,57 +444,52 @@ struct published_stream_data * add_stream_to_map(
 void remove_name_from_map(
         struct published_stream_map * map, const char * name)
 {
-    int mutex_lock_err;
+    GUARD(&map->map_lock, {
+        int index = hash(name) % MAP_SIZE;
 
-    mutex_lock_err = pthread_mutex_lock(&map->map_lock);
-    assert(mutex_lock_err == 0);
-
-    int index = hash(name) % MAP_SIZE;
-
-    struct published_stream_node * node = map->buckets[index];
-    while (node != NULL) {
-        if (strcmp(name, node->data->name) == 0) {
-            break;
+        struct published_stream_node * node = map->buckets[index];
+        while (node != NULL) {
+            if (strcmp(name, node->data->name) == 0) {
+                break;
+            }
+            node = node->next;
         }
-        node = node->next;
-    }
 
-    if (node != NULL) {
-        mutex_lock_err = pthread_mutex_lock(&node->data->access_lock);
-        assert(mutex_lock_err == 0);
+        if (node != NULL) {
+            GUARD(&node->data->access_lock, {
+                if (node == map->buckets[index]) map->buckets[index] = node->next;
+                if (node->prev != NULL) node->prev->next = node->next;
+                if (node->next != NULL) node->next->prev = node->prev;
+                free(node);
+            })
+        }
 
-        if (node == map->buckets[index]) map->buckets[index] = node->next;
-        if (node->prev != NULL) node->prev->next = node->next;
-        if (node->next != NULL) node->next->prev = node->prev;
-        free(node);
-    }
-
-    map->num_publishers--;
-
-    mutex_lock_err = pthread_mutex_unlock(&map->map_lock);
-    assert(mutex_lock_err == 0);
+        map->num_publishers--;
+    })
 }
 
 
 struct published_stream_data * get_stream_from_map(
         struct published_stream_map * map, const char * name)
 {
-    int mutex_lock_err;
-
-    mutex_lock_err = pthread_mutex_lock(&map->map_lock);
-    assert(mutex_lock_err == 0);
-
     struct published_stream_data * data = NULL;
 
-    struct published_stream_node * node = get_node_with_name(map, name);
-    if (node != NULL) {
-        data = node->data;
-        mutex_lock_err = pthread_mutex_lock(&data->access_lock);
-        if (mutex_lock_err != 0) data = NULL;
-    }
-
-    mutex_lock_err = pthread_mutex_unlock(&map->map_lock);
-    assert(mutex_lock_err == 0);
+    GUARD(&map->map_lock, {
+        struct published_stream_node * node = get_node_with_name(map, name);
+        if (node != NULL) {
+            data = node->data;
+            /* The data's access lock is locked while map lock is also locked
+             * to prevent a use-after-free if the data were to be removed
+             * from the map after this function returns but before the caller
+             * uses the data.
+             *
+             * Doing it this way guarantees that the data will not be freed
+             * before the caller of this function indicates they are done with
+             * the data by unlocking its access lock. */
+            int mutex_lock_err = pthread_mutex_lock(&data->access_lock);
+            if (mutex_lock_err != 0) data = NULL;
+        }
+    })
 
     return data;
 }
@@ -574,23 +497,19 @@ struct published_stream_data * get_stream_from_map(
 bool max_subscribers_exceeded(
         struct published_stream_map * map, struct published_stream_data * data)
 {
-    int mutex_lock_err;
+    bool max_subscribers_exceeded;
 
-    mutex_lock_err = pthread_mutex_lock(&data->num_subscribers_lock);
-    assert(mutex_lock_err == 0);
-
-    bool max_subscribers_exceeded =
-        map->max_subscribers_per_publisher > 0
-        && data->num_subscribers >= map->max_subscribers_per_publisher;
-
-    mutex_lock_err = pthread_mutex_unlock(&data->num_subscribers_lock);
-    assert(mutex_lock_err == 0);
+    GUARD(&data->num_subscribers_lock, {
+        max_subscribers_exceeded =
+            map->max_subscribers_per_publisher > 0
+            && data->num_subscribers >= map->max_subscribers_per_publisher;
+    })
 
     return max_subscribers_exceeded;
 }
 
 // Common setup between adding an SRT subscriber and adding a web subscriber
-struct published_stream_data * add_subscriber_common(
+static struct published_stream_data * add_subscriber_common(
         struct published_stream_map * map,
         struct authenticator * auth, char * name, char * addr)
 {
@@ -678,46 +597,36 @@ void remove_stream_from_map(
 
     remove_name_from_map(map, data->name);
 
-    int mutex_lock_err;
-    mutex_lock_err = pthread_mutex_unlock(&data->access_lock);
-    assert(mutex_lock_err == 0);
+    GUARD(&data->access_lock, {
+        // Clean up SRT subscribers
+        GUARD(&data->srt_subscribers_lock, {
+            struct srt_subscriber_node * srt_node = data->srt_subscribers;
+            while (srt_node != NULL) {
+                srt_close(srt_node->sock);
+                struct srt_subscriber_node * next_node = srt_node->next;
+                free(srt_node);
+                srt_node = next_node;
+            }
+        })
 
-    // Clean up SRT subscribers
-    mutex_lock_err = pthread_mutex_lock(&data->srt_subscribers_lock);
-    assert(mutex_lock_err == 0);
+        // Clean up Web subscribers
+        GUARD(&data->web_subscribers_lock, {
+            struct web_subscriber_node * web_node = data->web_subscribers;
+            while (web_node != NULL) {
+                write(web_node->sock, "0\r\n\r\n", 5);
+                close(web_node->sock);
+                struct web_subscriber_node * next_node = web_node->next;
+                free(web_node);
+                web_node = next_node;
+            }
+        })
 
-    struct srt_subscriber_node * srt_node = data->srt_subscribers;
-    while (srt_node != NULL) {
-        srt_close(srt_node->sock);
-        struct srt_subscriber_node * next_node = srt_node->next;
-        free(srt_node);
-        srt_node = next_node;
-    }
-
-    mutex_lock_err = pthread_mutex_unlock(&data->srt_subscribers_lock);
-    assert(mutex_lock_err == 0);
-
-    // Clean up Web subscribers
-    mutex_lock_err = pthread_mutex_lock(&data->web_subscribers_lock);
-    assert(mutex_lock_err == 0);
-
-    struct web_subscriber_node * web_node = data->web_subscribers;
-    while (web_node != NULL) {
-        write(web_node->sock, "0\r\n\r\n", 5);
-        close(web_node->sock);
-        struct web_subscriber_node * next_node = web_node->next;
-        free(web_node);
-        web_node = next_node;
-    }
-
-    mutex_lock_err = pthread_mutex_unlock(&data->web_subscribers_lock);
-    assert(mutex_lock_err == 0);
-
-    // Free the published_stream_data
-    pthread_mutex_destroy(&data->num_subscribers_lock);
-    pthread_mutex_destroy(&data->srt_subscribers_lock);
-    pthread_mutex_destroy(&data->web_subscribers_lock);
-    pthread_mutex_destroy(&data->access_lock);
-    free(data->name);
-    free(data);
+        // Free the published_stream_data
+        pthread_mutex_destroy(&data->num_subscribers_lock);
+        pthread_mutex_destroy(&data->srt_subscribers_lock);
+        pthread_mutex_destroy(&data->web_subscribers_lock);
+        pthread_mutex_destroy(&data->access_lock);
+        free(data->name);
+        free(data);
+    })
 }

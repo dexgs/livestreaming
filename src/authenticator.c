@@ -1,16 +1,14 @@
+#include <assert.h>
+#include <netdb.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <string.h>
-#include <assert.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <unistd.h>
+#include <string.h>
+
 #include "authenticator.h"
+#include "guard.h"
+
 
 struct authenticator {
     pthread_mutex_t num_connections_lock;
@@ -37,30 +35,15 @@ struct authenticator * create_authenticator(
     return auth;
 }
 
-bool contains_illegal_chars(const char * str) {
+static bool contains_illegal_chars(const char * str) {
     // Sanitize command as `popen` implicitly calls `sh -c`
     for (size_t i = 0; str[i] != '\0'; i++) {
         char c = str[i];
         switch (c) {
-                case '$':
-                case '(':
-                case ')':
-                case '[':
-                case ']':
-                case '<':
-                case '>':
-                case '|':
-                case '\n':
-                case '\\':
-                case '&':
-                case '*':
-                case '#':
-                case '~':
-                case '!':
-                case '`':
-                case ';':
-                case '\'':
-                case '"':
+                case '$': case '(': case ')': case '[': case ']':
+                case '<': case '>': case '|': case '\n': case '\\':
+                case '&': case '*': case '#': case '~': case '!':
+                case '`': case ';': case '\'': case '"':
                     return true;
         }
     }
@@ -76,12 +59,9 @@ char * authenticate(
 {
     char * output_stream_name = NULL;
 
-    int mutex_lock_err;
-    mutex_lock_err = pthread_mutex_lock(&auth->num_connections_lock);
-    assert(mutex_lock_err == 0);
-    auth->num_pending_connections++;
-    mutex_lock_err = pthread_mutex_unlock(&auth->num_connections_lock);
-    assert(mutex_lock_err == 0);
+    GUARD(&auth->num_connections_lock, {
+        auth->num_pending_connections++;
+    })
 
     const char * type_str = is_publisher ? PUBLISH_STRING : SUBSCRIBE_STRING;
 
@@ -92,18 +72,9 @@ char * authenticate(
         + strlen(stream_name)
         + 6;
     char * command = malloc(command_len);
-    // Set first char to the null character to avoid garbage data causing
-    // problems
-    command[0] = '\0';
-    // This is sub-optimal, but I don't care right now.
-    strcat(command, auth->auth_command);
-    strcat(command, " ");
-    strcat(command, type_str);
-    strcat(command, " ");
-    strcat(command, addr);
-    strcat(command, " '");
-    strcat(command, stream_name);
-    strcat(command, "'");
+
+    snprintf(command, command_len, "%s %s %s '%s'",
+            auth->auth_command, type_str, addr, stream_name);
 
     // Sanitize command as `popen` implicitly calls `sh -c`
     if (
@@ -118,6 +89,7 @@ char * authenticate(
     // call `auth_command` with arguments `type_str addr stream_name`
     FILE * p;
     p = popen(command, "r");
+    free(command);
 
     // If the command was started successfullly
     if (p != NULL) {
@@ -155,13 +127,9 @@ char * authenticate(
         }
     }
 
-    free(command);
-
-    mutex_lock_err = pthread_mutex_lock(&auth->num_connections_lock);
-    assert(mutex_lock_err == 0);
-    auth->num_pending_connections--;
-    mutex_lock_err = pthread_mutex_unlock(&auth->num_connections_lock);
-    assert(mutex_lock_err == 0);
+    GUARD(&auth->num_connections_lock, {
+        auth->num_pending_connections--;
+    })
 
     return output_stream_name;
 }

@@ -76,6 +76,8 @@ void test_authenticator_thread_driver(
         bool may_reject, bool must_reject)
 {
     // If no input is given, use a garbage string
+    // XXX: This makes valgrind very angry because we are technically using
+    // uninitialized values.
     if (input == NULL) {
         // Make a string from garbage data that
         // is guaranteed to be null terminated

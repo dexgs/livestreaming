@@ -1,10 +1,11 @@
-#include <pthread.h>
 #include <assert.h>
-#include "srt_subscriber.h"
-#include "srt_common.h"
-#include "srt.h"
-#include "published_stream.h"
+#include <pthread.h>
+
 #include "authenticator.h"
+#include "published_stream.h"
+#include "srt.h"
+#include "srt_common.h"
+#include "srt_subscriber.h"
 
 
 void * srt_subscriber(void * _d) {

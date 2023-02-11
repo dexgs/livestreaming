@@ -1,13 +1,15 @@
 #ifndef PUBLISHED_STREAM_H_
 #define PUBLISHED_STREAM_H_
 
-#include <stdbool.h>
 #include <pthread.h>
+#include <stdbool.h>
+
 #include "authenticator.h"
 #include "srt.h"
 
-// Streams with names beginning with this
-// value will not be listed by the web API
+
+/* Streams with names beginning with this
+ * value will not be listed by the web API */
 #ifndef UNLISTED_STREAM_NAME_PREFIX
 #define UNLISTED_STREAM_NAME_PREFIX "_"
 #endif
@@ -17,10 +19,10 @@
 #define MAP_SIZE 500
 #endif
 
-// Represents the data related to a single livestream.
-// It encapsulates the socket over which incoming data is received
-// as well as access to the connections over which the stream is
-// broadcast (along with the locks required for safe use across threads).
+/* Represents the data related to a single livestream.
+ * It encapsulates the socket over which incoming data is received
+ * as well as access to the connections over which the stream is
+ * broadcast (along with the locks required for safe use across threads). */
 struct published_stream_data {
     SRTSOCKET sock;
     char * name;
