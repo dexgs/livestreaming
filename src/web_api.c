@@ -9,17 +9,17 @@
 #include "published_stream.h"
 #include "web_api.h"
 
-const char * HTTP_JSON_OK =
+static const char * HTTP_JSON_OK =
     "HTTP/1.1 200 OK\r\n"
     "Connection: close\r\n"
     "Access-Control-Allow-Origin: *\r\n"
     "Content-Type: application/json\r\n";
 
-const char * HTTP_CONTENT_LENGTH = "Content-Length: ";
+static const char * HTTP_CONTENT_LENGTH = "Content-Length: ";
 
-const char * HTTP_CHUNKED_ENCODING = "Transfer-Encoding: chunked\r\n";
+static const char * HTTP_CHUNKED_ENCODING = "Transfer-Encoding: chunked\r\n";
 
-const char * HTTP_400 =
+static const char * HTTP_400 =
     "HTTP/1.1 400 Bad Request\r\n"
     "Access-Control-Allow-Origin: *\r\n"
     "Content-Type: text/plain\r\n"
@@ -27,7 +27,7 @@ const char * HTTP_400 =
     "Connection: close\r\n\r\n"
     "Invalid API endpoint.";
 
-const char * HTTP_404 =
+static const char * HTTP_404 =
     "HTTP/1.1 404 Not Found\r\n"
     "Access-Control-Allow-Origin: *\r\n"
     "Content-Type: text/plain\r\n"
@@ -35,12 +35,16 @@ const char * HTTP_404 =
     "Connection: close\r\n\r\n"
     "Not Found.";
 
+// Limit the number of stream name list instances which may exist concurrently
+static const size_t MAX_STREAM_NAMES_INSTANCES = 2;
+
 
 
 struct web_api_data {
     pthread_mutex_t update_lock;
     pthread_mutex_t names_lock;
     struct stream_names * stream_names;
+    size_t num_stream_names_instances;
 };
 
 // Store a list of stream names as well as the number of threads currently
@@ -73,17 +77,26 @@ static void update_stream_list(
 {
     // Only one thread may generate the streams list at a time
     if (pthread_mutex_trylock(&data->update_lock) == 0) {
-        unsigned int num_names = 0;
-        char ** names = stream_names(map, &num_names);
-        struct stream_names * stream_names = malloc(sizeof(struct stream_names));
-        *stream_names = (struct stream_names) {
-            .names = names,
-            .num_names = num_names
-        };
-
+        bool more_instances_allowed;
         GUARD(&data->names_lock, {
-            data->stream_names = stream_names;
+            more_instances_allowed =
+                data->num_stream_names_instances < MAX_STREAM_NAMES_INSTANCES;
         })
+
+        if (more_instances_allowed) {
+            unsigned int num_names = 0;
+            char ** names = stream_names(map, &num_names);
+            struct stream_names * stream_names = malloc(sizeof(struct stream_names));
+            *stream_names = (struct stream_names) {
+                .names = names,
+                .num_names = num_names
+            };
+
+            GUARD(&data->names_lock, {
+                data->stream_names = stream_names;
+                data->num_stream_names_instances++;
+            })
+        }
 
         int mutex_lock_err = pthread_mutex_unlock(&data->update_lock);
         assert(mutex_lock_err == 0);
@@ -152,6 +165,7 @@ static void active_stream_list(
                 && stream_names != data->stream_names)
         {
             free(stream_names);
+            data->num_stream_names_instances--;
         }
     })
 
