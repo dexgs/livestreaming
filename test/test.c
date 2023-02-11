@@ -192,12 +192,12 @@ void * add_web_subscriber_to_stream_thread(void * _data) {
 void test_published_streams() {
     for (int i = 0; i < NUM_TEST_RUNS; i++) {
         // Make stream names from garbage data
-        char ** stream_names = malloc(sizeof(void *) * NUM_TEST_THREADS);
+        char ** names = malloc(sizeof(void *) * NUM_TEST_THREADS);
         for (int i = 0; i < NUM_TEST_THREADS; i++) {
             char * stream_name = malloc(20);
             stream_name[19] = '\0';
             sprintf(stream_name, "%d", i);
-            stream_names[i] = stream_name;
+            names[i] = stream_name;
         }
 
         struct published_stream_map * map =
@@ -211,7 +211,7 @@ void test_published_streams() {
             struct published_stream_thread_data * d =
                 malloc(sizeof(struct published_stream_thread_data));
             d->map = map;
-            d->name = stream_names[i];
+            d->name = names[i];
             pthread_err =
                 pthread_create(&handles[i], NULL, add_stream_to_map_thread, d);
             assert(pthread_err == 0);
@@ -227,7 +227,7 @@ void test_published_streams() {
         // Assert that the stream map does not allow duplicate stream names
         for(int i = 0; i < NUM_TEST_THREADS; i++) {
             struct published_stream_data * data =
-                create_stream_data_in_map(map, -1, stream_names[i]);
+                create_stream_data_in_map(map, -1, names[i]);
             assert(data == NULL);
         }
 
@@ -236,7 +236,7 @@ void test_published_streams() {
             malloc(sizeof(void *) * NUM_TEST_THREADS);
         for (int i = 0; i < NUM_TEST_THREADS; i++) {
             struct published_stream_data * data =
-                get_stream_from_map(map, stream_names[i]);
+                get_stream_from_map(map, names[i]);
             assert(data != NULL);
             pthread_mutex_unlock(&data->access_lock);
             streams[i] = data;
@@ -280,10 +280,15 @@ void test_published_streams() {
             assert(get_num_subscribers(streams[i]) == 0);
         }
 
+        // make sure no memory is leaked by generating the sorted stream list
+        unsigned int num_streams = 0;
+        char ** name_list = stream_names(map, &num_streams);
+        free(name_list);
+
         // Clean up published_stream_data
         for (int i = 0; i < NUM_TEST_THREADS; i++) {
             struct published_stream_data * data = streams[i];
-            remove_name_from_map(map, stream_names[i]);
+            remove_name_from_map(map, names[i]);
             pthread_mutex_unlock(&data->access_lock);
             // Clean up mutexes and free
             pthread_mutex_destroy(&data->num_subscribers_lock);
@@ -298,9 +303,9 @@ void test_published_streams() {
 
         // Clean up names
         for (int i = 0; i < NUM_TEST_THREADS; i++) {
-            free(stream_names[i]);
+            free(names[i]);
         }
-        free(stream_names);
+        free(names);
 
         free(streams);
         free(map);
