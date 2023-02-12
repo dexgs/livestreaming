@@ -627,6 +627,7 @@ void remove_stream_from_map(
         pthread_mutex_destroy(&data->web_subscribers_lock);
         pthread_mutex_destroy(&data->access_lock);
         free(data->name);
-        free(data);
     })
+
+    free(data);
 }
