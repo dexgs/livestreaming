@@ -93,6 +93,20 @@ static void update_stream_list(
             };
 
             GUARD(&data->names_lock, {
+                if (
+                        data->stream_names != NULL
+                        && data->stream_names->num_requests == 0)
+                {
+                    /* If the previous stream list's request count hit zero
+                     * *before* it was replaced by the next one, we need to
+                     * catch that and free it here, since the threads which
+                     * used it won't free their `stream_names` if it's still
+                     * equal to `data->stream_names` i.e. it is the most recent
+                     * stream list. */
+                    free(data->stream_names->names);
+                    free(data->stream_names);
+                    data->num_stream_names_instances--;
+                }
                 data->stream_names = stream_names;
                 data->num_stream_names_instances++;
             })
@@ -164,6 +178,7 @@ static void active_stream_list(
                 stream_names->num_requests == 0
                 && stream_names != data->stream_names)
         {
+            free(stream_names->names);
             free(stream_names);
             data->num_stream_names_instances--;
         }
