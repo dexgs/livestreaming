@@ -27,7 +27,7 @@ void start_web_listener(
     // Stop the program from closing when http subscribers close the connection
     signal(SIGPIPE, SIG_IGN);
 
-    struct sockaddr_in addr;
+    struct sockaddr_in addr = {};
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
     addr.sin_port = htons(port);
@@ -132,7 +132,7 @@ void * run_web_listener(void * _d) {
             close(client_sock);
             continue;
         }
-        
+
 
         if (max_pending_connections_exceeded(auth)) {
             close(client_sock);
