@@ -159,8 +159,7 @@ char * sockaddr_to_string(struct sockaddr * addr, int addr_len) {
     getnameinfo(
             (struct sockaddr *)addr, addr_len, addr_str,
             NI_MAXHOST, port_str, NI_MAXSERV, NI_NUMERICHOST);
-    strcat(addr_str, ":");
-    strcat(addr_str, port_str);
+    strcat(strcat(addr_str, ":"), port_str);
     free(port_str);
     addr_str = realloc(addr_str, strlen(addr_str) + 1);
     return addr_str;
