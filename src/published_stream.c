@@ -140,12 +140,12 @@ void remove_web_subscriber_node(
 
 
 // djb2
-static unsigned long hash(const char * str) {
+static unsigned long hash(const char * str, unsigned long seed) {
     unsigned long hash = 5381;
     int c;
 
     while ((c = *str++)) {
-        hash = ((hash << 5) + hash) + c;
+        hash = ((hash << 5) + hash) + c + seed;
     }
 
     return hash;
@@ -168,6 +168,8 @@ struct published_stream_map {
 
     unsigned int max_subscribers_per_publisher;
 
+    unsigned long hash_seed;
+
     struct published_stream_node * buckets[MAP_SIZE];
 };
 
@@ -179,9 +181,12 @@ struct published_stream_map * create_published_stream_map(
     struct published_stream_map * map =
         malloc(sizeof(struct published_stream_map));
 
+    srandom(time(NULL));
+
     *map = (struct published_stream_map) {
         .max_publishers = max_publishers,
-        .max_subscribers_per_publisher = max_subscribers_per_publisher
+        .max_subscribers_per_publisher = max_subscribers_per_publisher,
+        .hash_seed = random()
     };
 
     int mutex_init_err = pthread_mutex_init(&map->map_lock, NULL);
@@ -195,7 +200,7 @@ struct published_stream_map * create_published_stream_map(
 static struct published_stream_node * get_node_with_name(
         struct published_stream_map * map, const char * name)
 {
-    int index = hash(name) % MAP_SIZE;
+    int index = hash(name, map->hash_seed) % MAP_SIZE;
 
     struct published_stream_node * node = map->buckets[index];
     while (node != NULL) {
@@ -395,7 +400,7 @@ struct published_stream_data * create_stream_data_in_map(
         } else {
             data = create_published_stream_data(sock, name);
 
-            int index = hash(name) % MAP_SIZE;
+            int index = hash(name, map->hash_seed) % MAP_SIZE;
 
             struct published_stream_node * new_node =
                 malloc(sizeof(struct published_stream_node));
@@ -445,7 +450,7 @@ void remove_name_from_map(
         struct published_stream_map * map, const char * name)
 {
     GUARD(&map->map_lock, {
-        int index = hash(name) % MAP_SIZE;
+        int index = hash(name, map->hash_seed) % MAP_SIZE;
 
         struct published_stream_node * node = map->buckets[index];
         while (node != NULL) {
