@@ -54,7 +54,7 @@ clean:
 	rm -rf $(THIRDPARTY_DIR)/srt/_build
 
 ifeq ($(PREFIX),)
-	PREFIX := /usr
+PREFIX := /usr
 endif
 
 .PHONY: install
