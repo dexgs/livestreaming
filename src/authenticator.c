@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <ctype.h>
 #include <netdb.h>
 #include <pthread.h>
 #include <stdbool.h>
@@ -33,6 +34,30 @@ struct authenticator * create_authenticator(
     auth->auth_command = auth_command;
 
     return auth;
+}
+
+static bool is_url_safe(const char * str) {
+    const char allowed_chars[] = { '%', '-', '_', '.', '~' };
+    size_t len = sizeof(allowed_chars) / sizeof(allowed_chars[0]);
+
+    char c;
+    while ((c = *str++)) {
+        // every character must be either alphanumeric or one of the chars
+        // listed above
+        if (isalnum(c)) {
+            continue;
+        }
+
+        for (size_t i = 0; i < len; i++) {
+            if (c == allowed_chars[i]) {
+                continue;
+            }
+        }
+
+        return false;
+    }
+
+    return true;
 }
 
 static bool contains_illegal_chars(const char * str) {
@@ -79,7 +104,8 @@ char * authenticate(
     // Sanitize command as `popen` implicitly calls `sh -c`
     if (
             contains_illegal_chars(addr)
-            || contains_illegal_chars(stream_name))
+            || contains_illegal_chars(stream_name)
+            || !is_url_safe(stream_name))
     {
         free(command);
         return NULL;
