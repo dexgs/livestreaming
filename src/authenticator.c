@@ -44,17 +44,17 @@ static bool is_url_safe(const char * str) {
     while ((c = *str++)) {
         // every character must be either alphanumeric or one of the chars
         // listed above
-        if (isalnum(c)) {
-            continue;
-        }
 
-        for (size_t i = 0; i < len; i++) {
-            if (c == allowed_chars[i]) {
-                continue;
+        if (!isalnum(c)) {
+            bool is_allowed = false;
+            for (size_t i = 0; i < len; i++) {
+                if (c == allowed_chars[i]) {
+                    is_allowed = true;
+                    break;
+                }
             }
+            if (!is_allowed) return false;
         }
-
-        return false;
     }
 
     return true;
