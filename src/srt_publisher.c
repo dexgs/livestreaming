@@ -28,7 +28,6 @@ void * srt_publisher(void * _d) {
 
     char buf[SRT_BUFFER_SIZE] = {0};
     int bytes_read = 0;
-    int inorder = 0;
 
     char hex[12] = {0};
 
@@ -39,7 +38,7 @@ void * srt_publisher(void * _d) {
         GUARD(&data->srt_subscribers_lock, {
             struct srt_subscriber_node * srt_node = data->srt_subscribers;
             while (srt_node != NULL) {
-                send_err = srt_sendmsg(srt_node->sock, buf, bytes_read, -1, inorder);
+                send_err = srt_sendmsg(srt_node->sock, buf, bytes_read, -1, true);
                 struct srt_subscriber_node * next_node = srt_node->next;
 
                 // If sending failed, remove the subscriber
@@ -84,7 +83,6 @@ void * srt_publisher(void * _d) {
         // Fill buffer with new data
         SRT_MSGCTRL mctrl;
         bytes_read = srt_recvmsg2(sock, buf, SRT_BUFFER_SIZE, &mctrl);
-        inorder = mctrl.inorder;
     }
 
 #ifndef NDEBUG
