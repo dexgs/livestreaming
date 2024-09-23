@@ -7,6 +7,7 @@
 #include "web_api.h"
 #include "web_listener.h"
 #include "web_subscriber.h"
+#include "guard.h"
 
 
 struct thread_data {
@@ -134,15 +135,11 @@ void * run_web_listener(void * _d) {
         }
 
 
-        if (max_pending_connections_exceeded(auth)) {
-            close(client_sock);
-        } else {
-            char * addr_str = sockaddr_to_string(
-                    (struct sockaddr *) &client_addr, client_addr_len);
-            web_subscriber(
-                    client_sock, read_web_ip_from_headers,
-                    addr_str, auth, map, data);
-        }
+        char * addr_str = sockaddr_to_string(
+            (struct sockaddr *) &client_addr, client_addr_len);
+        web_subscriber(
+                client_sock, read_web_ip_from_headers,
+                addr_str, auth, map, data);
     }
 
     return NULL;

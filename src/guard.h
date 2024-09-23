@@ -13,6 +13,7 @@
     block \
     err = pthread_mutex_unlock(mtx); \
     assert(err == 0); \
+    (void) err; \
 }
 
 #endif

@@ -36,6 +36,15 @@ struct authenticator * create_authenticator(
     return auth;
 }
 
+// This function assumes num_connections_lock is currently held
+static bool max_pending_connections_exceeded(struct authenticator * auth) {
+    if (auth->max_pending_connections == 0) {
+        return false;
+    } else {
+        return auth->num_pending_connections >= auth->max_pending_connections;
+    }
+}
+
 static bool is_url_safe(const char * str) {
     const char allowed_chars[] = { '%', '-', '_', '.', '~' };
     size_t len = sizeof(allowed_chars) / sizeof(allowed_chars[0]);
@@ -84,9 +93,14 @@ char * authenticate(
 {
     char * output_stream_name = NULL;
 
+    bool exceeded;
     GUARD(&auth->num_connections_lock, {
-        auth->num_pending_connections++;
-    })
+        exceeded = max_pending_connections_exceeded(auth);
+        if (!exceeded) {
+            auth->num_pending_connections++;
+        }
+    });
+    if (exceeded) return NULL;
 
     const char * type_str = is_publisher ? PUBLISH_STRING : SUBSCRIBE_STRING;
 
@@ -159,24 +173,6 @@ char * authenticate(
 
     return output_stream_name;
 }
-
-
-bool max_pending_connections_exceeded(struct authenticator * auth) {
-    if (auth->max_pending_connections == 0) return false;
-
-    int mutex_lock_err;
-    mutex_lock_err = pthread_mutex_lock(&auth->num_connections_lock);
-    assert(mutex_lock_err == 0);
-
-    bool exceeded =
-        auth->num_pending_connections >= auth->max_pending_connections;
-
-    mutex_lock_err = pthread_mutex_unlock(&auth->num_connections_lock);
-    assert(mutex_lock_err == 0);
-
-    return exceeded;
-}
-
 
 
 char * sockaddr_to_string(struct sockaddr * addr, int addr_len) {

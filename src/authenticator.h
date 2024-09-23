@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <pthread.h>
 
 struct authenticator;
 
@@ -14,8 +15,6 @@ struct authenticator * create_authenticator(
 char * authenticate(
         struct authenticator * auth, bool is_publisher,
         const char * addr, const char * stream_name);
-
-bool max_pending_connections_exceeded(struct authenticator * auth);
 
 char * sockaddr_to_string(struct sockaddr * addr, int addr_len);
 
